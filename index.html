@@ -1,16 +1,18 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>FinTrack — Personal Finance</title>
-<!-- Firebase -->
+<!-- Firebase Realtime Database + Auth -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
-    getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    getDatabase, ref, push, get, update, remove, onValue, set
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import {
+    getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAYBY0Ixe5ZudU_cEmsjDNHOkCBs8AZ1Us",
@@ -18,13 +20,17 @@
     projectId: "financial-management-23eab",
     storageBucket: "financial-management-23eab.firebasestorage.app",
     messagingSenderId: "154053765777",
-    appId: "1:154053765777:web:6f3095c5d1c3ad6967ad30"
+    appId: "1:154053765777:web:6f3095c5d1c3ad6967ad30",
+    databaseURL: "https://financial-management-23eab-default-rtdb.firebaseio.com"
   };
 
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
   window._db = db;
-  window._fs = { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot };
+  window._fs = { ref, push, get, update, remove, onValue, set };
+  window._auth = auth;
+  window._authFns = { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged };
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
 <!-- Chart.js -->
@@ -259,7 +265,26 @@
 
 <div id="toast"></div>
 
-<div class="app">
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay" style="position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:36px 32px;width:100%;max-width:380px;text-align:center;">
+    <div class="sidebar-logo" style="border:none;padding:0;margin-bottom:28px;font-size:1.5rem;justify-content:center;display:flex;">Fin<span>Track</span></div>
+    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:24px;">Sign in to manage your finances</div>
+    <div class="form-group" style="margin-bottom:14px;text-align:left;">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="cindy or rose" autocomplete="username" style="width:100%;"/>
+    </div>
+    <div class="form-group" style="margin-bottom:20px;text-align:left;">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password" style="width:100%;" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:11px;" onclick="doLogin()">Log In</button>
+    <div id="login-error" style="color:var(--red);font-size:0.8rem;margin-top:14px;display:none;"></div>
+    <div style="margin-top:18px;font-size:0.75rem;color:var(--muted);">First time? Type your username & password — your account will be created automatically.</div>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none;">
   <!-- SIDEBAR -->
   <nav class="sidebar">
     <div class="sidebar-logo">Fin<span>Track</span></div>
@@ -272,6 +297,10 @@
       <div class="nav-item" data-page="loans"><span class="nav-icon">🤝</span><span>Loans</span></div>
       <div class="nav-item" data-page="savings"><span class="nav-icon">🎯</span><span>Savings</span></div>
       <div class="nav-item" data-page="bizsales"><span class="nav-icon">📈</span><span>Business &amp; Sales</span></div>
+    </div>
+    <div style="padding:16px 20px;border-top:1px solid var(--border);margin-top:auto;">
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">Logged in as <strong id="user-name" style="color:var(--text);">—</strong></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="doLogout()">🚪 Log Out</button>
     </div>
   </nav>
 
@@ -1071,13 +1100,45 @@ const today = () => new Date().toISOString().slice(0,10);
 // State
 let bankData = [], incomeData = [], expenseData = [], loanData = [], savingsData = [], bizData = [], salesData = [], cashData = [];
 let bankFilter = 'all', expFilter = 'all', bizFilter = 'all', salesFilter = 'all';
-let db, fs;
+let db, fs, auth, authFns, currentUser = null;
+const VALID_USERS = ['cindy', 'rose'];
+
+function userPath(col) {
+  return currentUser ? 'users/' + currentUser.uid + '/' + col : col;
+}
+
+function clearAllData() {
+  bankData = []; incomeData = []; expenseData = []; loanData = [];
+  savingsData = []; bizData = []; salesData = []; cashData = [];
+}
+
+function showLogin() {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  clearAllData();
+}
+
+function showApp() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  const name = currentUser?.email?.split('@')?.[0] || 'User';
+  document.getElementById('user-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+}
 
 // Wait for Firebase
 window.addEventListener('firebase-ready', () => {
   db = window._db;
   fs = window._fs;
-  loadAll();
+  auth = window._auth;
+  authFns = window._authFns;
+  authFns.onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user) { showApp(); loadAll(); }
+    else { showLogin(); }
+  });
 });
 
 // Set default dates
@@ -1102,32 +1163,38 @@ function toast(msg, type='success') {
   setTimeout(() => el.className = '', 2800);
 }
 
-// ---- FIRESTORE HELPERS ----
+// ---- REALTIME DATABASE HELPERS ----
 async function save(col, data) {
+  if (!currentUser) { toast('Not logged in', 'error'); return; }
   try {
-    const ref = await fs.addDoc(fs.collection(db, col), {...data, createdAt: Date.now()});
-    return ref.id;
+    const newRef = await fs.push(fs.ref(db, userPath(col)), {...data, createdAt: Date.now()});
+    return newRef.key;
   } catch(e) { toast('Error saving: ' + e.message, 'error'); }
 }
 async function remove(col, id) {
+  if (!currentUser) { toast('Not logged in', 'error'); return; }
   try {
-    await fs.deleteDoc(fs.doc(db, col, id));
+    await fs.remove(fs.ref(db, userPath(col) + '/' + id));
   } catch(e) { toast('Error deleting: ' + e.message, 'error'); }
 }
 async function update(col, id, data) {
+  if (!currentUser) { toast('Not logged in', 'error'); return; }
   try {
-    await fs.updateDoc(fs.doc(db, col, id), data);
+    await fs.update(fs.ref(db, userPath(col) + '/' + id), data);
   } catch(e) { toast('Error updating: ' + e.message, 'error'); }
 }
 async function loadCol(col) {
+  if (!currentUser) return [];
   try {
-    const snap = await fs.getDocs(fs.collection(db, col));
-    return snap.docs.map(d => ({id: d.id, ...d.data()}));
+    const snap = await fs.get(fs.ref(db, userPath(col)));
+    if (!snap.exists()) return [];
+    return Object.entries(snap.val()).map(([id, data]) => ({id, ...data}));
   } catch(e) { return []; }
 }
 
 // ---- LOAD ALL ----
 async function loadAll() {
+  if (!currentUser) return;
   [bankData, incomeData, expenseData, loanData, savingsData, bizData, salesData, cashData] = await Promise.all([
     loadCol('bankTransactions'), loadCol('income'), loadCol('expenses'),
     loadCol('loans'), loadCol('savings'), loadCol('business'), loadCol('sales'), loadCol('cashTransactions')
@@ -1136,6 +1203,36 @@ async function loadAll() {
   renderSales();
   renderDashboard();
 }
+
+// ---- LOGIN / LOGOUT ----
+window.doLogin = async function() {
+  const username = document.getElementById('login-user').value.trim().toLowerCase();
+  const password = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  if (!VALID_USERS.includes(username)) { errEl.textContent = 'Invalid username. Use cindy or rose.'; errEl.style.display = 'block'; return; }
+  if (!password) { errEl.textContent = 'Enter a password.'; errEl.style.display = 'block'; return; }
+  const email = username + '@financial-management-23eab.com';
+  try {
+    await authFns.signInWithEmailAndPassword(auth, email, password);
+    errEl.style.display = 'none';
+  } catch (e) {
+    if (e.code === 'auth/user-not-found') {
+      try {
+        await authFns.createUserWithEmailAndPassword(auth, email, password);
+        errEl.style.display = 'none';
+      } catch (ce) { errEl.textContent = 'Error creating account: ' + ce.message; errEl.style.display = 'block'; }
+    } else {
+      errEl.textContent = 'Login failed: ' + e.message; errEl.style.display = 'block';
+    }
+  }
+};
+
+window.doLogout = async function() {
+  try {
+    await authFns.signOut(auth);
+    toast('Logged out');
+  } catch(e) { toast('Error logging out: ' + e.message, 'error'); }
+};
 
 // ---- PERIOD FILTER ----
 function inPeriod(dateStr, period) {
@@ -1992,8 +2089,7 @@ function renderDashboard() {
   }
 }
 
-// Make globally accessible
-window.addBank = window.addBank;
+// Auth functions are globally accessible via window.doLogin / window.doLogout
 
 // ======= SALES =======
 let saleItemRowId = 0;
