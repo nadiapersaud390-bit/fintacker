@@ -357,6 +357,14 @@
         </div>
       </div>
 
+      <div class="card mb24">
+        <div class="section-header">
+          <div class="section-title">🔁 Recurring Due</div>
+          <span style="font-size:0.78rem;color:var(--muted);">Bills, salary &amp; transfers ready for their next round</span>
+        </div>
+        <div id="dash-recurring-due"></div>
+      </div>
+
       <div class="grid-2 mb24">
         <div class="card">
           <div class="section-header"><div class="section-title">Spending by Category</div></div>
@@ -1068,6 +1076,82 @@ function inPeriod(dateStr, period) {
   return true;
 }
 
+// ======= RECURRING DUE DETECTION =======
+// Figures out which recurring bank transfers, expenses, or income entries
+// are due for their next round, based on the last entry in that series.
+function nextDueDate(dateStr, freq) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return null;
+  switch(freq) {
+    case 'weekly': d.setDate(d.getDate()+7); break;
+    case 'fortnightly': d.setDate(d.getDate()+14); break;
+    case 'monthly': d.setMonth(d.getMonth()+1); break;
+    case '3months': d.setMonth(d.getMonth()+3); break;
+    case 'yearly': d.setFullYear(d.getFullYear()+1); break;
+    default: return null;
+  }
+  return d.toISOString().slice(0,10);
+}
+function latestByKey(arr, keyFn) {
+  const map = {};
+  arr.forEach(x => { const k = keyFn(x); if (!map[k] || x.date > map[k].date) map[k] = x; });
+  return Object.values(map);
+}
+function getRecurringDue() {
+  const todayStr = today();
+  const due = [];
+  latestByKey(bankData.filter(x=>x.recurring && !x.auto), x=>['bank',x.type,x.category,x.desc,x.recurring].join('|'))
+    .forEach(x => { const next = nextDueDate(x.date, x.recurring); if (next && next <= todayStr) due.push({source:'bank', id:x.id, label:x.desc||x.category, sub:x.category, amount:x.amount, nextDate:next, type:x.type}); });
+  latestByKey(expenseData.filter(x=>x.recurring), x=>['exp',x.category,x.desc,x.recurring].join('|'))
+    .forEach(x => { const next = nextDueDate(x.date, x.recurring); if (next && next <= todayStr) due.push({source:'expense', id:x.id, label:x.desc||x.category, sub:x.category, amount:x.amount, nextDate:next}); });
+  latestByKey(incomeData.filter(x=>x.frequency && x.frequency!=='once'), x=>['inc',x.source,x.frequency].join('|'))
+    .forEach(x => { const next = nextDueDate(x.date, x.frequency); if (next && next <= todayStr) due.push({source:'income', id:x.id, label:x.source, sub:'Income', amount:x.amount, nextDate:next}); });
+  return due.sort((a,b)=> a.nextDate < b.nextDate ? -1 : 1);
+}
+function renderRecurringDue() {
+  const el = document.getElementById('dash-recurring-due');
+  if (!el) return;
+  const due = getRecurringDue();
+  if (!due.length) {
+    el.innerHTML = '<div class="empty" style="padding:24px;"><div class="empty-icon">🔁</div><div class="empty-text">Nothing recurring is due right now</div></div>';
+    return;
+  }
+  el.innerHTML = due.map(d => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(37,42,58,0.5);">
+      <div>
+        <span class="badge ${d.source==='income'?'badge-green':d.source==='bank'?'badge-blue':'badge-red'}">${d.source==='income'?'💰 Income':d.source==='bank'?'🏦 '+(d.type==='deposit'?'Deposit':'Withdrawal'):'🧾 Expense'}</span>
+        <strong style="margin-left:8px;">${d.label}</strong>
+        <span style="color:var(--muted);font-size:0.8rem;margin-left:8px;">${fmt(d.amount)} · due ${d.nextDate}</span>
+      </div>
+      <button class="btn btn-success btn-sm" onclick="quickAddRecurring('${d.source}','${d.id}','${d.nextDate}')">＋ Add</button>
+    </div>`).join('');
+}
+window.quickAddRecurring = async function(source, lastId, nextDate) {
+  if (source === 'bank') {
+    const last = bankData.find(x=>x.id===lastId); if(!last) return;
+    const entry = {type:last.type, amount:last.amount, desc:last.desc, category:last.category, date:nextDate, recurring:last.recurring};
+    const id = await save('bankTransactions', entry);
+    if (id) bankData.push({id, ...entry});
+    renderBank();
+    toast('Recurring transfer added ✓');
+  } else if (source === 'expense') {
+    const last = expenseData.find(x=>x.id===lastId); if(!last) return;
+    const entry = {category:last.category, desc:last.desc, amount:last.amount, date:nextDate, recurring:last.recurring, paid:'unpaid', bankTxnId:null};
+    const id = await save('expenses', entry);
+    expenseData.push({id, ...entry});
+    renderExpenses();
+    toast('Recurring expense added as Unpaid ✓');
+  } else if (source === 'income') {
+    const last = incomeData.find(x=>x.id===lastId); if(!last) return;
+    const entry = {source:last.source, amount:last.amount, frequency:last.frequency, date:nextDate, notes:last.notes};
+    const id = await save('income', entry);
+    incomeData.push({id, ...entry});
+    renderIncome();
+    toast('Recurring income added ✓');
+  }
+  renderDashboard();
+};
+
 // ======= AUTO-LINKED BANK TRANSACTIONS =======
 // When an expense is marked Paid, or money is moved into a Savings goal,
 // a withdrawal is created here automatically so the Bank Balance always
@@ -1136,6 +1220,19 @@ window.deleteBank = async function(id) {
   toast('Deleted');
 };
 
+window.duplicateBank = function(id) {
+  const r = bankData.find(x => x.id === id); if (!r) return;
+  document.getElementById('b-type').value = r.type;
+  document.getElementById('b-amount').value = r.amount;
+  document.getElementById('b-desc').value = r.desc || '';
+  if ([...document.getElementById('b-cat').options].some(o=>o.value===r.category)) document.getElementById('b-cat').value = r.category;
+  document.getElementById('b-date').value = today();
+  document.getElementById('b-recurring').value = r.recurring || '';
+  document.getElementById('b-amount').focus();
+  document.querySelector('#page-bank .card').scrollIntoView({behavior:'smooth', block:'start'});
+  toast('Loaded into the form above — adjust & click Add');
+};
+
 window.filterBankPeriod = function(p, el) {
   bankFilter = p;
   document.querySelectorAll('.period-tab').forEach(t => { if(t.closest('#page-bank')) t.classList.remove('active'); });
@@ -1168,9 +1265,12 @@ function renderBank() {
       <td style="color:var(--green)">${r.type==='deposit'?fmt(r.amount):''}</td>
       <td style="color:var(--red)">${r.type==='withdrawal'?fmt(r.amount):''}</td>
       <td style="font-weight:600;color:${(balMap[r.id]||0)>=0?'var(--green)':'var(--red)'}">${fmt(balMap[r.id])}</td>
-      <td>${r.auto
-        ? '<span style="color:var(--muted);font-size:0.72rem;" title="Undo this from the Expense or Savings page instead">linked</span>'
-        : '<button class="btn btn-danger btn-xs" onclick="deleteBank(\''+r.id+'\')">Del</button>'}</td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-xs" onclick="duplicateBank('${r.id}')" title="Duplicate into the form above">📋</button>
+        ${r.auto
+          ? '<span style="color:var(--muted);font-size:0.72rem;" title="Undo this from the Expense or Savings page instead">linked</span>'
+          : '<button class="btn btn-danger btn-xs" onclick="deleteBank(\''+r.id+'\')">Del</button>'}
+      </td>
     </tr>`).join('');
   document.getElementById('bank-table').innerHTML = rows || '<tr><td colspan="8" class="empty"><div class="empty-icon">🏦</div><div class="empty-text">No transactions yet</div></td></tr>';
 }
@@ -1199,6 +1299,17 @@ window.deleteIncome = async function(id) {
   renderIncome(); renderDashboard();
   toast('Deleted');
 };
+window.duplicateIncome = function(id) {
+  const r = incomeData.find(x => x.id === id); if (!r) return;
+  document.getElementById('i-source').value = r.source || '';
+  document.getElementById('i-amount').value = r.amount;
+  document.getElementById('i-freq').value = r.frequency || 'monthly';
+  document.getElementById('i-date').value = today();
+  document.getElementById('i-notes').value = r.notes || '';
+  document.getElementById('i-amount').focus();
+  document.querySelector('#page-income .card').scrollIntoView({behavior:'smooth', block:'start'});
+  toast('Loaded into the form above — adjust & click Add');
+};
 function renderIncome() {
   const now = new Date();
   const thisMonth = incomeData.filter(x => inPeriod(x.date,'month')).reduce((s,x)=>s+x.amount,0);
@@ -1214,7 +1325,10 @@ function renderIncome() {
       <td style="color:var(--green);font-weight:600">${fmt(r.amount)}</td>
       <td><span class="badge badge-blue">${r.frequency}</span></td>
       <td style="color:var(--muted)">${r.notes||'—'}</td>
-      <td><button class="btn btn-danger btn-xs" onclick="deleteIncome('${r.id}')">Del</button></td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-xs" onclick="duplicateIncome('${r.id}')" title="Duplicate into the form above">📋</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteIncome('${r.id}')">Del</button>
+      </td>
     </tr>`).join('') || '<tr><td colspan="6" class="empty"><div class="empty-icon">💰</div><div class="empty-text">No income logged yet</div></td></tr>';
 }
 
@@ -1270,6 +1384,18 @@ window.filterExpPeriod = function(p, el) {
   el.classList.add('active');
   renderExpenses();
 };
+window.duplicateExpense = function(id) {
+  const r = expenseData.find(x => x.id === id); if (!r) return;
+  if ([...document.getElementById('e-cat').options].some(o=>o.value===r.category)) document.getElementById('e-cat').value = r.category;
+  document.getElementById('e-desc').value = r.desc || '';
+  document.getElementById('e-amount').value = r.amount;
+  document.getElementById('e-date').value = today();
+  document.getElementById('e-recurring').value = r.recurring || '';
+  document.getElementById('e-paid').value = 'unpaid';
+  document.getElementById('e-amount').focus();
+  document.querySelector('#page-expenses .card').scrollIntoView({behavior:'smooth', block:'start'});
+  toast('Loaded into the form above — adjust & click Add');
+};
 function renderExpenses() {
   const monthExp = expenseData.filter(x => inPeriod(x.date,'month'));
   document.getElementById('exp-month').textContent = fmt(monthExp.reduce((s,x)=>s+x.amount,0));
@@ -1289,7 +1415,10 @@ function renderExpenses() {
           ${r.paid==='paid'?'✅ Paid':'⏳ Unpaid'}
         </span>
       </td>
-      <td><button class="btn btn-danger btn-xs" onclick="deleteExpense('${r.id}')">Del</button></td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-xs" onclick="duplicateExpense('${r.id}')" title="Duplicate into the form above">📋</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteExpense('${r.id}')">Del</button>
+      </td>
     </tr>`).join('') || '<tr><td colspan="7" class="empty"><div class="empty-icon">🧾</div><div class="empty-text">No expenses yet</div></td></tr>';
 }
 
@@ -1530,6 +1659,8 @@ function renderBusiness() {
 // ======= DASHBOARD =======
 let catChart = null, flowChart = null;
 function renderDashboard() {
+  renderRecurringDue();
+
   // ---- Bank balance ----
   // This already has paid expenses AND savings contributions withdrawn
   // automatically, so it reflects what's truly sitting in the account.
