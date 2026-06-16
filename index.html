@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FinTrack — Personal Finance</title>
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAYBY0Ixe5ZudU_cEmsjDNHOkCBs8AZ1Us",
+    authDomain: "financial-management-23eab.firebaseapp.com",
+    projectId: "financial-management-23eab",
+    storageBucket: "financial-management-23eab.firebasestorage.app",
+    messagingSenderId: "154053765777",
+    appId: "1:154053765777:web:6f3095c5d1c3ad6967ad30"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window._db = db;
+  window._fs = { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy, onSnapshot };
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --card: #1c2030;
+    --border: #252a3a;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --accent4: #ffd166;
+    --text: #e8eaf0;
+    --muted: #7a8099;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --radius: 12px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+    --currency: "GYD $";
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 220px; min-height: 100vh; background: var(--surface);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 16px; font-size: 1.3rem; font-weight: 700;
+    color: var(--accent); letter-spacing: -0.5px; border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo span { color: var(--accent2); }
+  .nav { flex: 1; padding: 12px 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 11px 20px;
+    cursor: pointer; color: var(--muted); font-size: 0.92rem; font-weight: 500;
+    transition: all 0.15s; border-left: 3px solid transparent; user-select: none;
+  }
+  .nav-item:hover { background: var(--card); color: var(--text); }
+  .nav-item.active { color: var(--accent); background: rgba(108,99,255,0.08); border-left-color: var(--accent); }
+  .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+  .main { margin-left: 220px; flex: 1; padding: 28px 32px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-title { font-size: 1.6rem; font-weight: 700; margin-bottom: 24px; color: var(--text); }
+
+  /* Cards */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .mb16 { margin-bottom: 16px; }
+  .mb24 { margin-bottom: 24px; }
+
+  /* Stat cards */
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .stat-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .stat-value { font-size: 1.6rem; font-weight: 700; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.yellow { color: var(--yellow); }
+  .stat-value.accent { color: var(--accent); }
+  .stat-sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+  /* Forms */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 0.8rem; color: var(--muted); }
+  input, select, textarea {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 9px 12px; font-size: 0.88rem;
+    font-family: var(--font); transition: border 0.15s; outline: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+  select option { background: var(--card); }
+
+  /* Buttons */
+  .btn {
+    padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 0.88rem; font-weight: 600; font-family: var(--font); transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #5a52e0; }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { background: #16a34a; }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  .btn-danger:hover { background: var(--red); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+  .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+  .btn-xs { padding: 3px 9px; font-size: 0.75rem; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  th { padding: 10px 14px; text-align: left; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 14px; border-bottom: 1px solid rgba(37,42,58,0.5); vertical-align: middle; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  tr:last-child td { border-bottom: none; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+  }
+  .badge-green { background: rgba(34,197,94,0.12); color: var(--green); }
+  .badge-red { background: rgba(239,68,68,0.12); color: var(--red); }
+  .badge-yellow { background: rgba(245,158,11,0.12); color: var(--yellow); }
+  .badge-blue { background: rgba(108,99,255,0.12); color: var(--accent); }
+  .badge-teal { background: rgba(0,212,170,0.12); color: var(--accent2); }
+
+  /* Progress bars */
+  .progress-bar { background: var(--border); border-radius: 99px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.4s; }
+
+  /* Section header */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 1rem; font-weight: 600; }
+
+  /* Toggle */
+  .toggle-paid {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border); font-size: 0.8rem; user-select: none;
+    transition: all 0.15s;
+  }
+  .toggle-paid.paid { background: rgba(34,197,94,0.12); color: var(--green); border-color: var(--green); }
+  .toggle-paid.unpaid { background: rgba(245,158,11,0.12); color: var(--yellow); border-color: var(--yellow); }
+
+  /* Chart container */
+  .chart-box { position: relative; height: 260px; }
+
+  /* Period filter */
+  .period-tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .period-tab {
+    padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+    cursor: pointer; font-size: 0.8rem; color: var(--muted); background: transparent;
+    transition: all 0.15s;
+  }
+  .period-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Loan direction */
+  .loan-lend { border-left: 3px solid var(--green); }
+  .loan-owe { border-left: 3px solid var(--red); }
+
+  /* Savings goal */
+  .savings-goal-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px; margin-bottom: 14px;
+  }
+  .savings-goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .savings-goal-name { font-weight: 600; }
+  .savings-amounts { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .empty-text { font-size: 0.9rem; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 20px; font-size: 0.88rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4); display: none;
+    max-width: 320px;
+  }
+  #toast.show { display: block; animation: slide-in 0.2s ease; }
+  #toast.success { border-left: 4px solid var(--green); color: var(--green); }
+  #toast.error { border-left: 4px solid var(--red); color: var(--red); }
+  @keyframes slide-in { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* Responsive */
+  @media(max-width: 768px) {
+    .sidebar { width: 60px; }
+    .sidebar-logo, .nav-item span { display: none; }
+    .nav-item { justify-content: center; padding: 14px; }
+    .main { margin-left: 60px; padding: 16px; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* Input row */
+  .input-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .input-row .form-group { flex: 1; min-width: 130px; }
+
+  /* Category dot */
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+
+  /* Bank balance hero */
+  .balance-hero {
+    background: linear-gradient(135deg, #1c2030 0%, #252a3a 100%);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 28px 32px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+  }
+  .balance-hero-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .balance-hero-amount { font-size: 2.8rem; font-weight: 800; color: var(--accent2); letter-spacing: -1px; }
+  .balance-hero-sub { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">Fin<span>Track</span></div>
+    <div class="nav" id="nav">
+      <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+      <div class="nav-item" data-page="bank"><span class="nav-icon">🏦</span><span>Bank</span></div>
+      <div class="nav-item" data-page="income"><span class="nav-icon">💰</span><span>Income</span></div>
+      <div class="nav-item" data-page="expenses"><span class="nav-icon">🧾</span><span>Expenses</span></div>
+      <div class="nav-item" data-page="loans"><span class="nav-icon">🤝</span><span>Loans</span></div>
+      <div class="nav-item" data-page="savings"><span class="nav-icon">🎯</span><span>Savings</span></div>
+      <div class="nav-item" data-page="business"><span class="nav-icon">📈</span><span>Business</span></div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-title">Dashboard</div>
+
+      <div class="balance-hero">
+        <div>
+          <div class="balance-hero-label">Bank Balance</div>
+          <div class="balance-hero-amount" id="dash-bank-balance">GYD $0</div>
+          <div class="balance-hero-sub" id="dash-bank-sub">Loading...</div>
+        </div>
+        <div style="text-align:right">
+          <div class="balance-hero-label">Net Worth Snapshot</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--accent)" id="dash-net">GYD $0</div>
+          <div class="balance-hero-sub" id="dash-net-sub">Income − Expenses this month</div>
+        </div>
+      </div>
+
+      <div class="grid-4 mb24">
+        <div class="stat-card">
+          <div class="stat-label">Monthly Income</div>
+          <div class="stat-value green" id="dash-income">GYD $0</div>
+          <div class="stat-sub">This month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Monthly Expenses</div>
+          <div class="stat-value red" id="dash-expenses">GYD $0</div>
+          <div class="stat-sub">This month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Unpaid Bills</div>
+          <div class="stat-value yellow" id="dash-unpaid">0</div>
+          <div class="stat-sub">Need attention</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Loans</div>
+          <div class="stat-value accent" id="dash-loans">0</div>
+          <div class="stat-sub">Owed / Lending</div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb24">
+        <div class="card">
+          <div class="section-header"><div class="section-title">Spending by Category</div></div>
+          <div class="chart-box"><canvas id="chart-cat"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="section-header"><div class="section-title">Monthly Cash Flow</div></div>
+          <div class="chart-box"><canvas id="chart-flow"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card mb24">
+        <div class="section-header"><div class="section-title">Savings Goals Progress</div></div>
+        <div id="dash-savings-goals">
+          <div class="empty"><div class="empty-icon">🎯</div><div class="empty-text">No savings goals yet</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header"><div class="section-title">Recent Transactions</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
+            <tbody id="dash-recent"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BANK ===== -->
+    <div id="page-bank" class="page">
+      <div class="page-title">Bank Account</div>
+
+      <div class="grid-3 mb24">
+        <div class="stat-card">
+          <div class="stat-label">Current Balance</div>
+          <div class="stat-value green" id="bank-balance">GYD $0</div>
+          <div class="stat-sub" id="bank-balance-sub">All transactions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Deposits</div>
+          <div class="stat-value green" id="bank-total-in">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Withdrawals</div>
+          <div class="stat-value red" id="bank-total-out">GYD $0</div>
+        </div>
+      </div>
+
+      <div class="card mb24">
+        <div class="section-title mb16">Add Transaction</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Type</label>
+            <select id="b-type">
+              <option value="deposit">💚 Deposit (Money In)</option>
+              <option value="withdrawal">🔴 Withdrawal (Money Out)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount (GYD)</label>
+            <input type="number" id="b-amount" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="b-desc" placeholder="e.g. Pay collected"/>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="b-cat">
+              <option>Salary/Pay</option>
+              <option>Car Installment</option>
+              <option>Insurance</option>
+              <option>Rent</option>
+              <option>Groceries</option>
+              <option>Food</option>
+              <option>Internet</option>
+              <option>Pets</option>
+              <option>Mother</option>
+              <option>Savings Transfer</option>
+              <option>Business</option>
+              <option>Loan Payment</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="b-date"/>
+          </div>
+          <div class="form-group">
+            <label>Recurring?</label>
+            <select id="b-recurring">
+              <option value="">One-time</option>
+              <option value="weekly">Weekly</option>
+              <option value="fortnightly">Fortnightly</option>
+              <option value="monthly">Monthly</option>
+              <option value="3months">Every 3 Months</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addBank()">Add Transaction</button>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Transaction Ledger</div>
+          <div class="period-tabs" style="margin-bottom:0">
+            <button class="period-tab active" onclick="filterBankPeriod('all',this)">All</button>
+            <button class="period-tab" onclick="filterBankPeriod('month',this)">This Month</button>
+            <button class="period-tab" onclick="filterBankPeriod('3month',this)">3 Months</button>
+            <button class="period-tab" onclick="filterBankPeriod('year',this)">This Year</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Recurring</th><th>Deposit</th><th>Withdrawal</th><th>Balance</th><th>Action</th></tr></thead>
+            <tbody id="bank-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== INCOME ===== -->
+    <div id="page-income" class="page">
+      <div class="page-title">Income</div>
+
+      <div class="grid-3 mb24">
+        <div class="stat-card">
+          <div class="stat-label">This Month</div>
+          <div class="stat-value green" id="inc-month">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">This Year</div>
+          <div class="stat-value green" id="inc-year">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Sources</div>
+          <div class="stat-value accent" id="inc-sources">0</div>
+        </div>
+      </div>
+
+      <div class="card mb24">
+        <div class="section-title mb16">Add Income</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Source</label>
+            <input type="text" id="i-source" placeholder="e.g. Main Job, Freelance"/>
+          </div>
+          <div class="form-group">
+            <label>Amount (GYD)</label>
+            <input type="number" id="i-amount" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label>Frequency</label>
+            <select id="i-freq">
+              <option value="weekly">Weekly</option>
+              <option value="fortnightly">Fortnightly</option>
+              <option value="monthly" selected>Monthly</option>
+              <option value="3months">Every 3 Months</option>
+              <option value="yearly">Yearly</option>
+              <option value="once">One-time</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date Received</label>
+            <input type="date" id="i-date"/>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <input type="text" id="i-notes" placeholder="Optional"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addIncome()">Log Income</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title mb16">Income History</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Source</th><th>Amount</th><th>Frequency</th><th>Notes</th><th>Action</th></tr></thead>
+            <tbody id="income-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EXPENSES ===== -->
+    <div id="page-expenses" class="page">
+      <div class="page-title">Expenses</div>
+
+      <div class="grid-4 mb24">
+        <div class="stat-card">
+          <div class="stat-label">This Month</div>
+          <div class="stat-value red" id="exp-month">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Unpaid This Month</div>
+          <div class="stat-value yellow" id="exp-unpaid">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Paid This Month</div>
+          <div class="stat-value green" id="exp-paid">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">This Year</div>
+          <div class="stat-value red" id="exp-year">GYD $0</div>
+        </div>
+      </div>
+
+      <div class="card mb24">
+        <div class="section-title mb16">Add Expense</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="e-cat">
+              <option>Food</option>
+              <option>Groceries</option>
+              <option>Rent</option>
+              <option>Car Installment</option>
+              <option>Car Insurance</option>
+              <option>Internet</option>
+              <option>Pets</option>
+              <option>Mother</option>
+              <option>Medical</option>
+              <option>Utilities</option>
+              <option>Clothing</option>
+              <option>Entertainment</option>
+              <option>Travel</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="e-desc" placeholder="What is this for?"/>
+          </div>
+          <div class="form-group">
+            <label>Amount (GYD)</label>
+            <input type="number" id="e-amount" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="e-date"/>
+          </div>
+          <div class="form-group">
+            <label>Recurring?</label>
+            <select id="e-recurring">
+              <option value="">One-time</option>
+              <option value="weekly">Weekly</option>
+              <option value="fortnightly">Fortnightly</option>
+              <option value="monthly">Monthly</option>
+              <option value="3months">Every 3 Months</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="e-paid">
+              <option value="paid">✅ Paid</option>
+              <option value="unpaid">⏳ Not Paid Yet</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addExpense()">Add Expense</button>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Expense Records</div>
+          <div class="period-tabs" style="margin-bottom:0">
+            <button class="period-tab active" onclick="filterExpPeriod('all',this)">All</button>
+            <button class="period-tab" onclick="filterExpPeriod('month',this)">This Month</button>
+            <button class="period-tab" onclick="filterExpPeriod('3month',this)">3 Months</button>
+            <button class="period-tab" onclick="filterExpPeriod('year',this)">This Year</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Recurring</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="expense-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LOANS ===== -->
+    <div id="page-loans" class="page">
+      <div class="page-title">Loans</div>
+
+      <div class="grid-4 mb24">
+        <div class="stat-card">
+          <div class="stat-label">I Lent Out</div>
+          <div class="stat-value green" id="loan-lent">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">I Owe Others</div>
+          <div class="stat-value red" id="loan-owe">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Net Position</div>
+          <div class="stat-value accent" id="loan-net">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Loans</div>
+          <div class="stat-value yellow" id="loan-count">0</div>
+        </div>
+      </div>
+
+      <div class="card mb24">
+        <div class="section-title mb16">Record Loan</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Direction</label>
+            <select id="l-dir">
+              <option value="lent">💚 I Lent (They owe me)</option>
+              <option value="owe">🔴 I Owe (I borrowed)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Person/Entity</label>
+            <input type="text" id="l-person" placeholder="Name"/>
+          </div>
+          <div class="form-group">
+            <label>Amount (GYD)</label>
+            <input type="number" id="l-amount" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label>Amount Paid Back (GYD)</label>
+            <input type="number" id="l-paid" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="l-date"/>
+          </div>
+          <div class="form-group">
+            <label>Due Date (optional)</label>
+            <input type="date" id="l-due"/>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <input type="text" id="l-notes" placeholder="Reason / details"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addLoan()">Add Loan</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title mb16">Active Loans</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Direction</th><th>Person</th><th>Original</th><th>Paid Back</th><th>Remaining</th><th>Date</th><th>Due</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="loans-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SAVINGS ===== -->
+    <div id="page-savings" class="page">
+      <div class="page-title">Savings Goals</div>
+
+      <div class="grid-3 mb24">
+        <div class="stat-card">
+          <div class="stat-label">Total Saved</div>
+          <div class="stat-value green" id="sav-total">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Goal</div>
+          <div class="stat-value accent" id="sav-goal">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Goals Active</div>
+          <div class="stat-value yellow" id="sav-count">0</div>
+        </div>
+      </div>
+
+      <div class="card mb24">
+        <div class="section-title mb16">New Savings Goal</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Goal Name</label>
+            <input type="text" id="s-name" placeholder="e.g. Travel, Surgery"/>
+          </div>
+          <div class="form-group">
+            <label>Target Amount (GYD)</label>
+            <input type="number" id="s-target" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label>Already Saved (GYD)</label>
+            <input type="number" id="s-saved" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label>Monthly Contribution (GYD)</label>
+            <input type="number" id="s-monthly" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label>Target Date (optional)</label>
+            <input type="date" id="s-date"/>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <input type="text" id="s-notes" placeholder="Why are you saving?"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addSavings()">Create Goal</button>
+      </div>
+
+      <div id="savings-goals-list"></div>
+    </div>
+
+    <!-- ===== BUSINESS ===== -->
+    <div id="page-business" class="page">
+      <div class="page-title">Business</div>
+
+      <div class="grid-4 mb24">
+        <div class="stat-card">
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-value green" id="biz-revenue">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Costs</div>
+          <div class="stat-value red" id="biz-costs">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Profit / Loss</div>
+          <div class="stat-value" id="biz-profit">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Profit Margin</div>
+          <div class="stat-value accent" id="biz-margin">0%</div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb24">
+        <div class="card">
+          <div class="section-title mb16">Add Transaction</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Type</label>
+              <select id="biz-type">
+                <option value="revenue">💚 Revenue / Sale</option>
+                <option value="cost">🔴 Cost / Expense</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <input type="text" id="biz-desc" placeholder="Product/service sold"/>
+            </div>
+            <div class="form-group">
+              <label>Amount (GYD)</label>
+              <input type="number" id="biz-amount" placeholder="0.00"/>
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="biz-cat">
+                <option>Sales</option>
+                <option>Services</option>
+                <option>Inventory</option>
+                <option>Supplies</option>
+                <option>Marketing</option>
+                <option>Transport</option>
+                <option>Utilities</option>
+                <option>Labour</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="biz-date"/>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="addBusiness()">Add Entry</button>
+        </div>
+        <div class="card">
+          <div class="section-title mb16" style="margin-bottom:12px">P&L Chart</div>
+          <div class="chart-box"><canvas id="chart-biz"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Business Ledger</div>
+          <div class="period-tabs" style="margin-bottom:0">
+            <button class="period-tab active" onclick="filterBizPeriod('all',this)">All</button>
+            <button class="period-tab" onclick="filterBizPeriod('month',this)">This Month</button>
+            <button class="period-tab" onclick="filterBizPeriod('3month',this)">3 Months</button>
+            <button class="period-tab" onclick="filterBizPeriod('year',this)">This Year</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Category</th><th>Amount</th><th>Action</th></tr></thead>
+            <tbody id="business-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script type="module">
+const CUR = "GYD $";
+const fmt = n => CUR + Number(n||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const today = () => new Date().toISOString().slice(0,10);
+
+// State
+let bankData = [], incomeData = [], expenseData = [], loanData = [], savingsData = [], bizData = [];
+let bankFilter = 'all', expFilter = 'all', bizFilter = 'all';
+let db, fs;
+
+// Wait for Firebase
+window.addEventListener('firebase-ready', () => {
+  db = window._db;
+  fs = window._fs;
+  loadAll();
+});
+
+// Set default dates
+document.querySelectorAll('input[type="date"]').forEach(el => el.value = today());
+
+// ---- NAVIGATION ----
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('page-' + item.dataset.page).classList.add('active');
+    if (item.dataset.page === 'dashboard') renderDashboard();
+  });
+});
+
+// ---- TOAST ----
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  setTimeout(() => el.className = '', 2800);
+}
+
+// ---- FIRESTORE HELPERS ----
+async function save(col, data) {
+  try {
+    const ref = await fs.addDoc(fs.collection(db, col), {...data, createdAt: Date.now()});
+    return ref.id;
+  } catch(e) { toast('Error saving: ' + e.message, 'error'); }
+}
+async function remove(col, id) {
+  try {
+    await fs.deleteDoc(fs.doc(db, col, id));
+  } catch(e) { toast('Error deleting: ' + e.message, 'error'); }
+}
+async function update(col, id, data) {
+  try {
+    await fs.updateDoc(fs.doc(db, col, id), data);
+  } catch(e) { toast('Error updating: ' + e.message, 'error'); }
+}
+async function loadCol(col) {
+  try {
+    const snap = await fs.getDocs(fs.collection(db, col));
+    return snap.docs.map(d => ({id: d.id, ...d.data()}));
+  } catch(e) { return []; }
+}
+
+// ---- LOAD ALL ----
+async function loadAll() {
+  [bankData, incomeData, expenseData, loanData, savingsData, bizData] = await Promise.all([
+    loadCol('bankTransactions'), loadCol('income'), loadCol('expenses'),
+    loadCol('loans'), loadCol('savings'), loadCol('business')
+  ]);
+  renderBank(); renderIncome(); renderExpenses(); renderLoans(); renderSavings(); renderBusiness();
+  renderDashboard();
+}
+
+// ---- PERIOD FILTER ----
+function inPeriod(dateStr, period) {
+  if (period === 'all') return true;
+  const d = new Date(dateStr), now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  if (period === 'month') return d.getFullYear()===y && d.getMonth()===m;
+  if (period === '3month') { const t = new Date(y, m-2, 1); return d >= t; }
+  if (period === 'year') return d.getFullYear() === y;
+  return true;
+}
+
+// ======= BANK =======
+window.addBank = async function() {
+  const type = document.getElementById('b-type').value;
+  const amount = parseFloat(document.getElementById('b-amount').value);
+  const desc = document.getElementById('b-desc').value.trim();
+  const cat = document.getElementById('b-cat').value;
+  const date = document.getElementById('b-date').value;
+  const recurring = document.getElementById('b-recurring').value;
+  if (!amount || !date) { toast('Enter amount and date', 'error'); return; }
+  const entry = {type, amount, desc, category: cat, date, recurring};
+  const id = await save('bankTransactions', entry);
+  bankData.push({id, ...entry});
+  renderBank(); renderDashboard();
+  document.getElementById('b-amount').value = '';
+  document.getElementById('b-desc').value = '';
+  toast('Transaction added ✓');
+};
+
+window.deleteBank = async function(id) {
+  if (!confirm('Delete this transaction?')) return;
+  await remove('bankTransactions', id);
+  bankData = bankData.filter(x => x.id !== id);
+  renderBank(); renderDashboard();
+  toast('Deleted');
+};
+
+window.filterBankPeriod = function(p, el) {
+  bankFilter = p;
+  document.querySelectorAll('.period-tab').forEach(t => { if(t.closest('#page-bank')) t.classList.remove('active'); });
+  el.classList.add('active');
+  renderBank();
+};
+
+function renderBank() {
+  const sorted = [...bankData].sort((a,b) => a.date < b.date ? 1 : -1);
+  const filtered = sorted.filter(x => inPeriod(x.date, bankFilter));
+  let running = 0;
+  const withBal = [...sorted].reverse().map(r => {
+    running += r.type === 'deposit' ? r.amount : -r.amount;
+    return {...r, balance: running};
+  }).reverse();
+  const balance = running;
+  const totalIn = sorted.reduce((s,x) => x.type==='deposit'?s+x.amount:s, 0);
+  const totalOut = sorted.reduce((s,x) => x.type==='withdrawal'?s+x.amount:s, 0);
+  document.getElementById('bank-balance').textContent = fmt(balance);
+  document.getElementById('bank-total-in').textContent = fmt(totalIn);
+  document.getElementById('bank-total-out').textContent = fmt(totalOut);
+  const balMap = {};
+  withBal.forEach(r => balMap[r.id] = r.balance);
+  const rows = filtered.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td>${r.desc||'—'}</td>
+      <td>${r.category||'—'}</td>
+      <td>${r.recurring ? '<span class="badge badge-blue">'+r.recurring+'</span>' : '—'}</td>
+      <td style="color:var(--green)">${r.type==='deposit'?fmt(r.amount):''}</td>
+      <td style="color:var(--red)">${r.type==='withdrawal'?fmt(r.amount):''}</td>
+      <td style="font-weight:600;color:${(balMap[r.id]||0)>=0?'var(--green)':'var(--red)'}">${fmt(balMap[r.id])}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="deleteBank('${r.id}')">Del</button></td>
+    </tr>`).join('');
+  document.getElementById('bank-table').innerHTML = rows || '<tr><td colspan="8" class="empty"><div class="empty-icon">🏦</div><div class="empty-text">No transactions yet</div></td></tr>';
+}
+
+// ======= INCOME =======
+window.addIncome = async function() {
+  const source = document.getElementById('i-source').value.trim();
+  const amount = parseFloat(document.getElementById('i-amount').value);
+  const freq = document.getElementById('i-freq').value;
+  const date = document.getElementById('i-date').value;
+  const notes = document.getElementById('i-notes').value;
+  if (!source || !amount || !date) { toast('Fill source, amount, date', 'error'); return; }
+  const entry = {source, amount, frequency: freq, date, notes};
+  const id = await save('income', entry);
+  incomeData.push({id, ...entry});
+  renderIncome(); renderDashboard();
+  document.getElementById('i-source').value = '';
+  document.getElementById('i-amount').value = '';
+  document.getElementById('i-notes').value = '';
+  toast('Income logged ✓');
+};
+window.deleteIncome = async function(id) {
+  if (!confirm('Delete?')) return;
+  await remove('income', id);
+  incomeData = incomeData.filter(x => x.id !== id);
+  renderIncome(); renderDashboard();
+  toast('Deleted');
+};
+function renderIncome() {
+  const now = new Date();
+  const thisMonth = incomeData.filter(x => inPeriod(x.date,'month')).reduce((s,x)=>s+x.amount,0);
+  const thisYear = incomeData.filter(x => inPeriod(x.date,'year')).reduce((s,x)=>s+x.amount,0);
+  document.getElementById('inc-month').textContent = fmt(thisMonth);
+  document.getElementById('inc-year').textContent = fmt(thisYear);
+  document.getElementById('inc-sources').textContent = [...new Set(incomeData.map(x=>x.source))].length;
+  const sorted = [...incomeData].sort((a,b) => a.date<b.date?1:-1);
+  document.getElementById('income-table').innerHTML = sorted.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td style="font-weight:600">${r.source}</td>
+      <td style="color:var(--green);font-weight:600">${fmt(r.amount)}</td>
+      <td><span class="badge badge-blue">${r.frequency}</span></td>
+      <td style="color:var(--muted)">${r.notes||'—'}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="deleteIncome('${r.id}')">Del</button></td>
+    </tr>`).join('') || '<tr><td colspan="6" class="empty"><div class="empty-icon">💰</div><div class="empty-text">No income logged yet</div></td></tr>';
+}
+
+// ======= EXPENSES =======
+window.addExpense = async function() {
+  const cat = document.getElementById('e-cat').value;
+  const desc = document.getElementById('e-desc').value.trim();
+  const amount = parseFloat(document.getElementById('e-amount').value);
+  const date = document.getElementById('e-date').value;
+  const recurring = document.getElementById('e-recurring').value;
+  const paid = document.getElementById('e-paid').value;
+  if (!amount || !date) { toast('Enter amount and date', 'error'); return; }
+  const entry = {category: cat, desc, amount, date, recurring, paid};
+  const id = await save('expenses', entry);
+  expenseData.push({id, ...entry});
+  renderExpenses(); renderDashboard();
+  document.getElementById('e-amount').value = '';
+  document.getElementById('e-desc').value = '';
+  toast('Expense added ✓');
+};
+window.deleteExpense = async function(id) {
+  if (!confirm('Delete?')) return;
+  await remove('expenses', id);
+  expenseData = expenseData.filter(x => x.id !== id);
+  renderExpenses(); renderDashboard();
+  toast('Deleted');
+};
+window.togglePaid = async function(id, current) {
+  const newVal = current === 'paid' ? 'unpaid' : 'paid';
+  await update('expenses', id, {paid: newVal});
+  expenseData = expenseData.map(x => x.id===id ? {...x, paid: newVal} : x);
+  renderExpenses(); renderDashboard();
+};
+window.filterExpPeriod = function(p, el) {
+  expFilter = p;
+  document.querySelectorAll('#page-expenses .period-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderExpenses();
+};
+function renderExpenses() {
+  const monthExp = expenseData.filter(x => inPeriod(x.date,'month'));
+  document.getElementById('exp-month').textContent = fmt(monthExp.reduce((s,x)=>s+x.amount,0));
+  document.getElementById('exp-unpaid').textContent = fmt(monthExp.filter(x=>x.paid==='unpaid').reduce((s,x)=>s+x.amount,0));
+  document.getElementById('exp-paid').textContent = fmt(monthExp.filter(x=>x.paid==='paid').reduce((s,x)=>s+x.amount,0));
+  document.getElementById('exp-year').textContent = fmt(expenseData.filter(x=>inPeriod(x.date,'year')).reduce((s,x)=>s+x.amount,0));
+  const filtered = [...expenseData].filter(x => inPeriod(x.date, expFilter)).sort((a,b)=>a.date<b.date?1:-1);
+  document.getElementById('expense-table').innerHTML = filtered.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td><span class="badge badge-blue">${r.category}</span></td>
+      <td>${r.desc||'—'}</td>
+      <td style="color:var(--red);font-weight:600">${fmt(r.amount)}</td>
+      <td>${r.recurring ? '<span class="badge badge-teal">'+r.recurring+'</span>' : '—'}</td>
+      <td>
+        <span class="toggle-paid ${r.paid==='paid'?'paid':'unpaid'}" onclick="togglePaid('${r.id}','${r.paid}')">
+          ${r.paid==='paid'?'✅ Paid':'⏳ Unpaid'}
+        </span>
+      </td>
+      <td><button class="btn btn-danger btn-xs" onclick="deleteExpense('${r.id}')">Del</button></td>
+    </tr>`).join('') || '<tr><td colspan="7" class="empty"><div class="empty-icon">🧾</div><div class="empty-text">No expenses yet</div></td></tr>';
+}
+
+// ======= LOANS =======
+window.addLoan = async function() {
+  const dir = document.getElementById('l-dir').value;
+  const person = document.getElementById('l-person').value.trim();
+  const amount = parseFloat(document.getElementById('l-amount').value);
+  const paid = parseFloat(document.getElementById('l-paid').value||0);
+  const date = document.getElementById('l-date').value;
+  const due = document.getElementById('l-due').value;
+  const notes = document.getElementById('l-notes').value;
+  if (!person || !amount || !date) { toast('Fill person, amount, date', 'error'); return; }
+  const entry = {direction: dir, person, amount, paidBack: paid, date, dueDate: due, notes};
+  const id = await save('loans', entry);
+  loanData.push({id, ...entry});
+  renderLoans(); renderDashboard();
+  document.getElementById('l-person').value = '';
+  document.getElementById('l-amount').value = '';
+  document.getElementById('l-paid').value = '';
+  document.getElementById('l-notes').value = '';
+  toast('Loan recorded ✓');
+};
+window.deleteLoan = async function(id) {
+  if (!confirm('Delete?')) return;
+  await remove('loans', id);
+  loanData = loanData.filter(x => x.id !== id);
+  renderLoans(); renderDashboard();
+  toast('Deleted');
+};
+window.updateLoanPayment = async function(id) {
+  const newPaid = parseFloat(prompt('Enter updated amount paid back (GYD):') || 0);
+  if (isNaN(newPaid)) return;
+  await update('loans', id, {paidBack: newPaid});
+  loanData = loanData.map(x => x.id===id ? {...x, paidBack: newPaid} : x);
+  renderLoans(); renderDashboard();
+  toast('Updated ✓');
+};
+function renderLoans() {
+  const active = loanData.filter(x => (x.amount - (x.paidBack||0)) > 0);
+  const lent = active.filter(x=>x.direction==='lent').reduce((s,x)=>s+(x.amount-(x.paidBack||0)),0);
+  const owe = active.filter(x=>x.direction==='owe').reduce((s,x)=>s+(x.amount-(x.paidBack||0)),0);
+  document.getElementById('loan-lent').textContent = fmt(lent);
+  document.getElementById('loan-owe').textContent = fmt(owe);
+  document.getElementById('loan-net').textContent = fmt(lent - owe);
+  document.getElementById('loan-count').textContent = active.length;
+  const sorted = [...loanData].sort((a,b)=>a.date<b.date?1:-1);
+  document.getElementById('loans-table').innerHTML = sorted.map(r => {
+    const remaining = r.amount - (r.paidBack||0);
+    const done = remaining <= 0;
+    return `<tr>
+      <td><span class="badge ${r.direction==='lent'?'badge-green':'badge-red'}">${r.direction==='lent'?'💚 Lent':'🔴 Owe'}</span></td>
+      <td style="font-weight:600">${r.person}</td>
+      <td>${fmt(r.amount)}</td>
+      <td style="color:var(--green)">${fmt(r.paidBack||0)}</td>
+      <td style="font-weight:700;color:${done?'var(--green)':'var(--yellow)'}">${fmt(remaining)}</td>
+      <td>${r.date}</td>
+      <td style="color:var(--muted)">${r.dueDate||'—'}</td>
+      <td><span class="badge ${done?'badge-green':'badge-yellow'}">${done?'✅ Done':'⏳ Open'}</span></td>
+      <td style="display:flex;gap:4px">
+        <button class="btn btn-ghost btn-xs" onclick="updateLoanPayment('${r.id}')">Update</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteLoan('${r.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" class="empty"><div class="empty-icon">🤝</div><div class="empty-text">No loans recorded</div></td></tr>';
+}
+
+// ======= SAVINGS =======
+window.addSavings = async function() {
+  const name = document.getElementById('s-name').value.trim();
+  const target = parseFloat(document.getElementById('s-target').value);
+  const saved = parseFloat(document.getElementById('s-saved').value||0);
+  const monthly = parseFloat(document.getElementById('s-monthly').value||0);
+  const date = document.getElementById('s-date').value;
+  const notes = document.getElementById('s-notes').value;
+  if (!name || !target) { toast('Enter goal name and target', 'error'); return; }
+  const entry = {name, target, saved, monthly, targetDate: date, notes};
+  const id = await save('savings', entry);
+  savingsData.push({id, ...entry});
+  renderSavings(); renderDashboard();
+  document.getElementById('s-name').value = '';
+  document.getElementById('s-target').value = '';
+  document.getElementById('s-saved').value = '';
+  document.getElementById('s-monthly').value = '';
+  document.getElementById('s-notes').value = '';
+  toast('Goal created ✓');
+};
+window.deleteSavings = async function(id) {
+  if (!confirm('Delete goal?')) return;
+  await remove('savings', id);
+  savingsData = savingsData.filter(x => x.id !== id);
+  renderSavings(); renderDashboard();
+  toast('Deleted');
+};
+window.updateSaved = async function(id) {
+  const newSaved = parseFloat(prompt('Enter new amount saved (GYD):') || 0);
+  if (isNaN(newSaved)) return;
+  await update('savings', id, {saved: newSaved});
+  savingsData = savingsData.map(x => x.id===id ? {...x, saved: newSaved} : x);
+  renderSavings(); renderDashboard();
+  toast('Updated ✓');
+};
+function renderSavings() {
+  const total = savingsData.reduce((s,x)=>s+(x.saved||0),0);
+  const goal = savingsData.reduce((s,x)=>s+(x.target||0),0);
+  document.getElementById('sav-total').textContent = fmt(total);
+  document.getElementById('sav-goal').textContent = fmt(goal);
+  document.getElementById('sav-count').textContent = savingsData.filter(x=>(x.saved||0)<x.target).length;
+  const container = document.getElementById('savings-goals-list');
+  if (!savingsData.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div><div class="empty-text">No savings goals. Create one above.</div></div>';
+    return;
+  }
+  container.innerHTML = savingsData.map(r => {
+    const pct = Math.min(100, ((r.saved||0)/r.target)*100);
+    const remaining = r.target - (r.saved||0);
+    const monthsLeft = r.monthly > 0 ? Math.ceil(remaining/r.monthly) : null;
+    return `
+    <div class="savings-goal-card">
+      <div class="savings-goal-header">
+        <div>
+          <div class="savings-goal-name">${r.name}</div>
+          ${r.notes ? '<div style="font-size:0.78rem;color:var(--muted);margin-top:2px">'+r.notes+'</div>' : ''}
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost btn-sm" onclick="updateSaved('${r.id}')">Update</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSavings('${r.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="savings-amounts">
+        <span>Saved: <strong style="color:var(--green)">${fmt(r.saved||0)}</strong></span>
+        <span>Target: <strong style="color:var(--accent)">${fmt(r.target)}</strong></span>
+        <span>Remaining: <strong style="color:var(--yellow)">${fmt(remaining)}</strong></span>
+        ${r.monthly ? '<span>Monthly: <strong>'+fmt(r.monthly)+'</strong></span>' : ''}
+        ${monthsLeft ? '<span>~'+monthsLeft+' months left</span>' : ''}
+        ${r.targetDate ? '<span>By: '+r.targetDate+'</span>' : ''}
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':'var(--accent)'}"></div>
+      </div>
+      <div style="text-align:right;font-size:0.78rem;color:var(--muted);margin-top:4px">${pct.toFixed(1)}% complete</div>
+    </div>`;
+  }).join('');
+}
+
+// ======= BUSINESS =======
+window.addBusiness = async function() {
+  const type = document.getElementById('biz-type').value;
+  const desc = document.getElementById('biz-desc').value.trim();
+  const amount = parseFloat(document.getElementById('biz-amount').value);
+  const cat = document.getElementById('biz-cat').value;
+  const date = document.getElementById('biz-date').value;
+  if (!amount || !date) { toast('Enter amount and date', 'error'); return; }
+  const entry = {type, desc, amount, category: cat, date};
+  const id = await save('business', entry);
+  bizData.push({id, ...entry});
+  renderBusiness();
+  document.getElementById('biz-desc').value = '';
+  document.getElementById('biz-amount').value = '';
+  toast('Entry added ✓');
+};
+window.deleteBusiness = async function(id) {
+  if (!confirm('Delete?')) return;
+  await remove('business', id);
+  bizData = bizData.filter(x => x.id !== id);
+  renderBusiness();
+  toast('Deleted');
+};
+window.filterBizPeriod = function(p, el) {
+  bizFilter = p;
+  document.querySelectorAll('#page-business .period-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderBusiness();
+};
+let bizChart = null;
+function renderBusiness() {
+  const revenue = bizData.filter(x=>x.type==='revenue').reduce((s,x)=>s+x.amount,0);
+  const costs = bizData.filter(x=>x.type==='cost').reduce((s,x)=>s+x.amount,0);
+  const profit = revenue - costs;
+  const margin = revenue > 0 ? (profit/revenue*100) : 0;
+  document.getElementById('biz-revenue').textContent = fmt(revenue);
+  document.getElementById('biz-costs').textContent = fmt(costs);
+  const profEl = document.getElementById('biz-profit');
+  profEl.textContent = fmt(profit);
+  profEl.className = 'stat-value ' + (profit >= 0 ? 'green' : 'red');
+  document.getElementById('biz-margin').textContent = margin.toFixed(1) + '%';
+  const filtered = bizData.filter(x => inPeriod(x.date, bizFilter)).sort((a,b)=>a.date<b.date?1:-1);
+  document.getElementById('business-table').innerHTML = filtered.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td><span class="badge ${r.type==='revenue'?'badge-green':'badge-red'}">${r.type==='revenue'?'💚 Revenue':'🔴 Cost'}</span></td>
+      <td>${r.desc||'—'}</td>
+      <td>${r.category}</td>
+      <td style="color:${r.type==='revenue'?'var(--green)':'var(--red)'};font-weight:600">${fmt(r.amount)}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="deleteBusiness('${r.id}')">Del</button></td>
+    </tr>`).join('') || '<tr><td colspan="6" class="empty"><div class="empty-icon">📈</div><div class="empty-text">No business entries yet</div></td></tr>';
+  // Chart: last 6 months
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({ label: d.toLocaleString('default',{month:'short'}), y: d.getFullYear(), m: d.getMonth() });
+  }
+  const revByM = months.map(m => bizData.filter(x=>x.type==='revenue'&&new Date(x.date).getMonth()===m.m&&new Date(x.date).getFullYear()===m.y).reduce((s,x)=>s+x.amount,0));
+  const costByM = months.map(m => bizData.filter(x=>x.type==='cost'&&new Date(x.date).getMonth()===m.m&&new Date(x.date).getFullYear()===m.y).reduce((s,x)=>s+x.amount,0));
+  if (bizChart) bizChart.destroy();
+  const ctx = document.getElementById('chart-biz').getContext('2d');
+  bizChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months.map(m=>m.label),
+      datasets: [
+        { label: 'Revenue', data: revByM, backgroundColor: 'rgba(34,197,94,0.6)', borderRadius: 6 },
+        { label: 'Costs', data: costByM, backgroundColor: 'rgba(239,68,68,0.5)', borderRadius: 6 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#7a8099' } } }, scales: { x: { ticks: { color: '#7a8099' }, grid: { color: '#252a3a' } }, y: { ticks: { color: '#7a8099' }, grid: { color: '#252a3a' } } } }
+  });
+}
+
+// ======= DASHBOARD =======
+let catChart = null, flowChart = null;
+function renderDashboard() {
+  // Bank balance
+  let bal = 0;
+  bankData.forEach(x => { bal += x.type==='deposit' ? x.amount : -x.amount; });
+  document.getElementById('dash-bank-balance').textContent = fmt(bal);
+  document.getElementById('dash-bank-sub').textContent = bankData.length + ' transactions total';
+
+  // Monthly income & expenses
+  const monthInc = incomeData.filter(x=>inPeriod(x.date,'month')).reduce((s,x)=>s+x.amount,0);
+  const monthExp = expenseData.filter(x=>inPeriod(x.date,'month')).reduce((s,x)=>s+x.amount,0);
+  const net = monthInc - monthExp;
+  document.getElementById('dash-income').textContent = fmt(monthInc);
+  document.getElementById('dash-expenses').textContent = fmt(monthExp);
+  document.getElementById('dash-net').textContent = fmt(net);
+  document.getElementById('dash-net-sub').className = 'balance-hero-sub';
+
+  // Unpaid
+  const unpaid = expenseData.filter(x=>x.paid==='unpaid'&&inPeriod(x.date,'month')).length;
+  document.getElementById('dash-unpaid').textContent = unpaid;
+
+  // Active loans
+  const activeLoans = loanData.filter(x=>(x.amount-(x.paidBack||0))>0).length;
+  document.getElementById('dash-loans').textContent = activeLoans;
+
+  // Recent transactions
+  const recent = [...expenseData, ...incomeData]
+    .map(x => ({ date: x.date, desc: x.source || x.desc || x.category, category: x.source ? 'Income' : x.category, amount: x.amount, type: x.source ? 'income' : 'expense' }))
+    .sort((a,b)=>a.date<b.date?1:-1).slice(0,8);
+  document.getElementById('dash-recent').innerHTML = recent.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td>${r.desc||'—'}</td>
+      <td><span class="badge badge-blue">${r.category}</span></td>
+      <td style="color:${r.type==='income'?'var(--green)':'var(--red)'};font-weight:600">${r.type==='income'?'+':'−'}${fmt(r.amount)}</td>
+    </tr>`).join('') || '<tr><td colspan="4" class="empty"><div class="empty-text">No transactions yet</div></td></tr>';
+
+  // Category chart
+  const cats = {};
+  expenseData.filter(x=>inPeriod(x.date,'month')).forEach(x => { cats[x.category] = (cats[x.category]||0) + x.amount; });
+  const catLabels = Object.keys(cats);
+  const catValues = Object.values(cats);
+  const colors = ['#6c63ff','#00d4aa','#ff6b6b','#ffd166','#3bc9db','#f06595','#74c0fc','#51cf66','#ffa94d','#e599f7'];
+  if (catChart) catChart.destroy();
+  const ctx1 = document.getElementById('chart-cat').getContext('2d');
+  catChart = new Chart(ctx1, {
+    type: 'doughnut',
+    data: { labels: catLabels.length ? catLabels : ['No Data'], datasets: [{ data: catValues.length ? catValues : [1], backgroundColor: catLabels.length ? colors : ['#252a3a'], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#7a8099', font: { size: 11 } } } } }
+  });
+
+  // Flow chart (last 6 months)
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({ label: d.toLocaleString('default',{month:'short'}), y: d.getFullYear(), m: d.getMonth() });
+  }
+  const incByM = months.map(mo => incomeData.filter(x=>new Date(x.date).getMonth()===mo.m&&new Date(x.date).getFullYear()===mo.y).reduce((s,x)=>s+x.amount,0));
+  const expByM = months.map(mo => expenseData.filter(x=>new Date(x.date).getMonth()===mo.m&&new Date(x.date).getFullYear()===mo.y).reduce((s,x)=>s+x.amount,0));
+  if (flowChart) flowChart.destroy();
+  const ctx2 = document.getElementById('chart-flow').getContext('2d');
+  flowChart = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: months.map(m=>m.label),
+      datasets: [
+        { label: 'Income', data: incByM, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.08)', tension: 0.4, fill: true },
+        { label: 'Expenses', data: expByM, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', tension: 0.4, fill: true }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#7a8099' } } }, scales: { x: { ticks: { color: '#7a8099' }, grid: { color: '#252a3a' } }, y: { ticks: { color: '#7a8099' }, grid: { color: '#252a3a' } } } }
+  });
+
+  // Savings goals in dashboard
+  const savEl = document.getElementById('dash-savings-goals');
+  if (!savingsData.length) {
+    savEl.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div><div class="empty-text">No savings goals yet</div></div>';
+  } else {
+    savEl.innerHTML = savingsData.map(r => {
+      const pct = Math.min(100, ((r.saved||0)/r.target)*100);
+      return `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-weight:600">${r.name}</span>
+          <span style="color:var(--muted);font-size:0.8rem">${fmt(r.saved||0)} / ${fmt(r.target)}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':'var(--accent)'}"></div>
+        </div>
+        <div style="text-align:right;font-size:0.72rem;color:var(--muted);margin-top:3px">${pct.toFixed(1)}%</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// Make globally accessible
+window.addBank = window.addBank;
+</script>
+</body>
+</html>
