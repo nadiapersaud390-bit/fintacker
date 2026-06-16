@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -300,10 +301,10 @@
             <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">Physical cash on you</div>
           </div>
 
-          <!-- Minus savings set aside -->
+          <!-- Savings (reference — already reflected in Bank via linked withdrawals) -->
           <div style="padding:0 20px;border-right:1px solid var(--border);">
             <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">🎯 Savings Set Aside</div>
-            <div style="font-size:2rem;font-weight:800;color:var(--yellow);" id="rp-savings">− GYD $0</div>
+            <div style="font-size:2rem;font-weight:800;color:var(--yellow);" id="rp-savings">GYD $0</div>
             <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;" id="rp-savings-sub">Across 0 goals</div>
           </div>
 
@@ -1859,16 +1860,13 @@ let catChart = null, flowChart = null;
 function renderDashboard() {
   renderRecurringDue();
 
-  // ---- Gross bank balance (raw deposits minus all withdrawals) ----
+  // ---- Bank balance (deposits minus all withdrawals, including linked savings/expense txns) ----
   let bankBal = 0;
   bankData.forEach(x => { bankBal += x.type==='deposit' ? x.amount : -x.amount; });
+  // NOTE: bankBal already reflects savings and paid-expense withdrawals via auto-linked bank transactions.
+  // We do NOT add savingsLinkedOut back — that would double-count.
 
-  // ---- Gross bank = bankBal + savings already withdrawn via linked txns ----
-  // We display the raw bank figure; savings are shown as a separate deduction.
-  const savingsLinkedOut = savingsData.reduce((s,x) => s + ((x.bankTxnId && x.saved>0) ? (x.saved||0) : 0), 0);
-  const grossBank = bankBal + savingsLinkedOut;
-
-  // ---- Total saved across all goals ----
+  // ---- Total saved across all goals (shown for reference only) ----
   const totalSaved   = savingsData.reduce((s,x)=>s+(x.saved||0),0);
   const savingsGoals = savingsData.length;
 
@@ -1876,20 +1874,20 @@ function renderDashboard() {
   let cashBal = 0;
   cashData.forEach(x => { cashBal += x.type==='in' ? x.amount : -x.amount; });
 
-  // ---- Unpaid expenses ----
+  // ---- Unpaid expenses (NOT yet withdrawn from bank) ----
   const unpaidItems = expenseData.filter(x=>x.paid==='unpaid');
   const totalUnpaid = unpaidItems.reduce((s,x)=>s+x.amount,0);
   const unpaidCount = unpaidItems.length;
 
-  // ---- ACTUALLY AVAILABLE = Bank − Savings − Unpaid Expenses ----
-  // Example: Bank $8,000 − Savings $3,000 − Unpaid $2,000 = $3,000
-  const actualAvail = grossBank - totalSaved - totalUnpaid;
+  // ---- ACTUALLY AVAILABLE = Bank Balance − Unpaid Expenses ----
+  // Savings are already deducted from bank via linked withdrawal transactions.
+  const actualAvail = bankBal - totalUnpaid;
 
   // ---- Populate reality panel ----
-  document.getElementById('rp-bank').textContent        = fmt(grossBank);
+  document.getElementById('rp-bank').textContent        = fmt(bankBal);
   document.getElementById('rp-cash').textContent        = fmt(cashBal);
-  document.getElementById('rp-savings').textContent     = '− ' + fmt(totalSaved);
-  document.getElementById('rp-savings-sub').textContent = savingsGoals + ' goal' + (savingsGoals!==1?'s':'');
+  document.getElementById('rp-savings').textContent     = fmt(totalSaved);
+  document.getElementById('rp-savings-sub').textContent = savingsGoals + ' goal' + (savingsGoals!==1?'s':'') + ' · already in Bank';
   document.getElementById('rp-unpaid').textContent      = '− ' + fmt(totalUnpaid);
   document.getElementById('rp-unpaid-sub').textContent  = unpaidCount + ' bill' + (unpaidCount!==1?'s':'') + ' pending';
   const actualEl = document.getElementById('rp-actual');
@@ -1899,10 +1897,10 @@ function renderDashboard() {
   actualSub.textContent = actualAvail >= 0 ? 'You\'re in the clear ✓' : 'Shortfall — you\'re in the minus';
   actualSub.style.color = actualAvail >= 0 ? 'var(--green)' : 'var(--red)';
   document.getElementById('rp-actual-formula').textContent =
-    fmt(grossBank) + ' − ' + fmt(totalSaved) + ' − ' + fmt(totalUnpaid) + ' = ' + fmt(actualAvail);
+    'Bank ' + fmt(bankBal) + ' − Unpaid ' + fmt(totalUnpaid) + ' = ' + fmt(actualAvail) + '  (savings already in bank)';
 
-  // ---- Breakdown bar ----
-  const barTotal = Math.max(grossBank, 0.01);
+  // ---- Breakdown bar (out of bank balance) ----
+  const barTotal = Math.max(Math.abs(bankBal), 0.01);
   const pAvail = Math.max(0, Math.min(100, (actualAvail / barTotal) * 100));
   const pSave  = Math.max(0, Math.min(100 - pAvail, (totalSaved / barTotal) * 100));
   const pBills = Math.max(0, Math.min(100 - pAvail - pSave, (totalUnpaid / barTotal) * 100));
