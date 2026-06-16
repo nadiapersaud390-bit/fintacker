@@ -270,8 +270,7 @@
       <div class="nav-item" data-page="expenses"><span class="nav-icon">🧾</span><span>Expenses</span></div>
       <div class="nav-item" data-page="loans"><span class="nav-icon">🤝</span><span>Loans</span></div>
       <div class="nav-item" data-page="savings"><span class="nav-icon">🎯</span><span>Savings</span></div>
-      <div class="nav-item" data-page="business"><span class="nav-icon">📈</span><span>Business</span></div>
-      <div class="nav-item" data-page="sales"><span class="nav-icon">🛒</span><span>Sales</span></div>
+      <div class="nav-item" data-page="bizsales"><span class="nav-icon">📈</span><span>Business &amp; Sales</span></div>
     </div>
   </nav>
 
@@ -860,13 +859,16 @@
     </div>
 
     <!-- ===== BUSINESS ===== -->
-    <div id="page-business" class="page">
-      <div class="page-title">Business</div>
+    <!-- ===== BUSINESS & SALES (merged) ===== -->
+    <div id="page-bizsales" class="page">
+      <div class="page-title">Business &amp; Sales</div>
 
+      <!-- Combined stats -->
       <div class="grid-4 mb24">
         <div class="stat-card">
           <div class="stat-label">Total Revenue</div>
           <div class="stat-value green" id="biz-revenue">GYD $0</div>
+          <div class="stat-sub">Business + Sales</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Total Costs</div>
@@ -882,9 +884,10 @@
         </div>
       </div>
 
+      <!-- Two-column: quick-add form + P&L chart -->
       <div class="grid-2 mb24">
         <div class="card">
-          <div class="section-title mb16">Add Transaction</div>
+          <div class="section-title mb16">Quick Add Business Entry</div>
           <div class="form-grid">
             <div class="form-group">
               <label>Type</label>
@@ -923,12 +926,13 @@
           <button class="btn btn-primary" onclick="addBusiness()">Add Entry</button>
         </div>
         <div class="card">
-          <div class="section-title mb16" style="margin-bottom:12px">P&L Chart</div>
+          <div class="section-title mb16">P&amp;L Chart</div>
           <div class="chart-box"><canvas id="chart-biz"></canvas></div>
         </div>
       </div>
 
-      <div class="card">
+      <!-- Business ledger -->
+      <div class="card mb24">
         <div class="section-header">
           <div class="section-title">Business Ledger</div>
           <div class="period-tabs" style="margin-bottom:0">
@@ -945,34 +949,16 @@
           </table>
         </div>
       </div>
-    </div>
 
-    <!-- ===== SALES ===== -->
-    <div id="page-sales" class="page">
-      <div class="page-title">Sales & Transactions</div>
-
-      <div class="grid-4 mb24">
-        <div class="stat-card">
-          <div class="stat-label">Total Revenue</div>
-          <div class="stat-value green" id="sales-revenue">GYD $0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Cost</div>
-          <div class="stat-value red" id="sales-cost">GYD $0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Profit</div>
-          <div class="stat-value" id="sales-profit">GYD $0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Transactions</div>
-          <div class="stat-value accent" id="sales-count">0</div>
-        </div>
-      </div>
-
+      <!-- Sales / Transactions -->
       <div class="section-header mb16">
-        <div class="section-title">Transaction Records</div>
+        <div class="section-title">Sales &amp; Transactions</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <!-- sales stats inline -->
+          <span style="font-size:0.8rem;color:var(--muted);">Revenue: <strong id="sales-revenue" style="color:var(--green)">GYD $0</strong></span>
+          <span style="font-size:0.8rem;color:var(--muted);">Cost: <strong id="sales-cost" style="color:var(--red)">GYD $0</strong></span>
+          <span style="font-size:0.8rem;color:var(--muted);">Profit: <strong id="sales-profit">GYD $0</strong></span>
+          <span style="font-size:0.8rem;color:var(--muted);">(<span id="sales-count">0</span> sales)</span>
           <div class="period-tabs" style="margin-bottom:0">
             <button class="period-tab active" onclick="filterSalesPeriod('all',this)">All</button>
             <button class="period-tab" onclick="filterSalesPeriod('month',this)">This Month</button>
@@ -1009,14 +995,30 @@
 
 <!-- ===== SALE MODAL ===== -->
 <div id="sale-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;width:min(760px,96vw);max-height:90vh;overflow-y:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;width:min(820px,96vw);max-height:92vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
       <div style="font-size:1.2rem;font-weight:700;">New Sale / Transaction</div>
       <button class="btn btn-ghost btn-sm" onclick="closeSaleModal()">✕ Close</button>
     </div>
 
+    <!-- LIVE SUMMARY BAR (top) -->
+    <div style="background:linear-gradient(135deg,#1c2030,#181d2e);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
+      <div>
+        <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">💰 Total Sell</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--accent2);" id="modal-sell-total">GYD $0.00</div>
+      </div>
+      <div>
+        <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">🏷️ Total Cost</div>
+        <div style="font-size:1.5rem;font-weight:800;color:var(--red);" id="modal-cost-total">GYD $0.00</div>
+      </div>
+      <div>
+        <div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">📈 Total Profit</div>
+        <div style="font-size:1.5rem;font-weight:800;" id="modal-profit-total">GYD $0.00</div>
+      </div>
+    </div>
+
     <!-- Header fields -->
-    <div class="form-grid" style="margin-bottom:16px;">
+    <div class="form-grid" style="margin-bottom:12px;">
       <div class="form-group">
         <label>Date</label>
         <input type="date" id="sale-date"/>
@@ -1025,18 +1027,22 @@
         <label>Description / What did you sell?</label>
         <input type="text" id="sale-desc" placeholder="e.g. Grocery order, Clothing batch…"/>
       </div>
+      <div class="form-group" style="min-width:180px;">
+        <label>🎯 Target Total Sell Price (GYD) <span style="color:var(--muted);font-size:0.75rem;">— optional, auto-fills sell prices</span></label>
+        <input type="number" id="sale-target-total" placeholder="e.g. 10000" oninput="autoDistributeSellPrices()"/>
+      </div>
     </div>
 
     <!-- Items table -->
-    <div style="margin-bottom:12px;font-size:0.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Items Sold</div>
+    <div style="margin-bottom:10px;font-size:0.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Items Sold</div>
     <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;font-size:0.85rem;" id="sale-items-table">
         <thead>
           <tr>
             <th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:0.75rem;border-bottom:1px solid var(--border);">Item Name</th>
             <th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:0.75rem;border-bottom:1px solid var(--border);">Qty</th>
-            <th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:0.75rem;border-bottom:1px solid var(--border);">Sell Price (each)</th>
             <th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:0.75rem;border-bottom:1px solid var(--border);">Cost Price (each)</th>
+            <th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:0.75rem;border-bottom:1px solid var(--border);">Sell Price (each) <span style="color:var(--accent);font-size:0.7rem;">auto ✦</span></th>
             <th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:0.75rem;border-bottom:1px solid var(--border);">Sell Total</th>
             <th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:0.75rem;border-bottom:1px solid var(--border);">Cost Total</th>
             <th style="padding:8px 10px;text-align:left;color:var(--muted);font-size:0.75rem;border-bottom:1px solid var(--border);">Profit</th>
@@ -1048,22 +1054,6 @@
     </div>
 
     <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="addSaleItemRow()">＋ Add Item Row</button>
-
-    <!-- Totals -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">
-      <div>
-        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">Total Sell</div>
-        <div style="font-size:1.2rem;font-weight:700;color:var(--accent2);" id="modal-sell-total">GYD $0.00</div>
-      </div>
-      <div>
-        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">Total Cost</div>
-        <div style="font-size:1.2rem;font-weight:700;color:var(--red);" id="modal-cost-total">GYD $0.00</div>
-      </div>
-      <div>
-        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">Total Profit</div>
-        <div style="font-size:1.2rem;font-weight:700;" id="modal-profit-total">GYD $0.00</div>
-      </div>
-    </div>
 
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
       <button class="btn btn-ghost" onclick="closeSaleModal()">Cancel</button>
@@ -1709,7 +1699,7 @@ window.deleteBusiness = async function(id) {
 };
 window.filterBizPeriod = function(p, el) {
   bizFilter = p;
-  document.querySelectorAll('#page-business .period-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#page-bizsales .period-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderBusiness();
 };
@@ -2013,6 +2003,7 @@ let saleItemRowId = 0;
 window.openSaleModal = function() {
   document.getElementById('sale-date').value = today();
   document.getElementById('sale-desc').value = '';
+  document.getElementById('sale-target-total').value = '';
   document.getElementById('sale-items-body').innerHTML = '';
   saleItemRowId = 0;
   addSaleItemRow();
@@ -2024,6 +2015,36 @@ window.closeSaleModal = function() {
   document.getElementById('sale-modal-overlay').classList.remove('open');
 };
 
+// Auto-distribute target sell price proportionally across items by cost price
+window.autoDistributeSellPrices = function() {
+  const target = parseFloat(document.getElementById('sale-target-total').value) || 0;
+  if (target <= 0) return;
+  const rows = Array.from(document.querySelectorAll('#sale-items-body tr'));
+  const rowData = rows.map(tr => {
+    const id   = tr.id.replace('sale-row-','');
+    const qty  = parseFloat(document.getElementById('si-qty-'+id)?.value) || 1;
+    const cost = parseFloat(document.getElementById('si-cost-'+id)?.value) || 0;
+    return { id, qty, cost };
+  });
+  const totalWeightedCost = rowData.reduce((s, r) => s + r.cost * r.qty, 0);
+  if (totalWeightedCost <= 0) {
+    // Equal split when no cost data
+    const perUnitEach = rowData.length ? target / rowData.reduce((s,r)=>s+r.qty,0) : 0;
+    rowData.forEach(r => {
+      const el = document.getElementById('si-sell-'+r.id);
+      if (el) { el.value = perUnitEach.toFixed(2); updateSaleRow(r.id); }
+    });
+    return;
+  }
+  rowData.forEach(r => {
+    const share    = (r.cost * r.qty) / totalWeightedCost;
+    const sellTot  = share * target;
+    const perUnit  = r.qty > 0 ? sellTot / r.qty : 0;
+    const el = document.getElementById('si-sell-'+r.id);
+    if (el) { el.value = perUnit.toFixed(2); updateSaleRow(r.id); }
+  });
+};
+
 window.addSaleItemRow = function() {
   const id = ++saleItemRowId;
   const tbody = document.getElementById('sale-items-body');
@@ -2031,9 +2052,9 @@ window.addSaleItemRow = function() {
   tr.id = 'sale-row-' + id;
   tr.innerHTML = `
     <td style="padding:5px 6px;"><input class="sale-item-input" placeholder="Item name" id="si-name-${id}" oninput="updateSaleRow(${id})"/></td>
-    <td style="padding:5px 6px;width:70px;"><input class="sale-item-input" type="number" placeholder="1" min="0" id="si-qty-${id}" value="1" oninput="updateSaleRow(${id})"/></td>
-    <td style="padding:5px 6px;width:130px;"><input class="sale-item-input" type="number" placeholder="0.00" min="0" id="si-sell-${id}" oninput="updateSaleRow(${id})"/></td>
-    <td style="padding:5px 6px;width:130px;"><input class="sale-item-input" type="number" placeholder="0.00" min="0" id="si-cost-${id}" oninput="updateSaleRow(${id})"/></td>
+    <td style="padding:5px 6px;width:70px;"><input class="sale-item-input" type="number" placeholder="1" min="0" id="si-qty-${id}" value="1" oninput="updateSaleRow(${id});autoDistributeSellPrices()"/></td>
+    <td style="padding:5px 6px;width:130px;"><input class="sale-item-input" type="number" placeholder="0.00" min="0" id="si-cost-${id}" oninput="updateSaleRow(${id});autoDistributeSellPrices()"/></td>
+    <td style="padding:5px 6px;width:130px;"><input class="sale-item-input" type="number" placeholder="0.00" min="0" id="si-sell-${id}" oninput="updateSaleRow(${id})" style="border-color:var(--accent);"/></td>
     <td style="padding:5px 6px;"><span class="sale-item-calc" id="si-sell-tot-${id}" style="color:var(--accent2)">—</span></td>
     <td style="padding:5px 6px;"><span class="sale-item-calc" id="si-cost-tot-${id}" style="color:var(--red)">—</span></td>
     <td style="padding:5px 6px;"><span class="sale-item-calc" id="si-profit-${id}">—</span></td>
@@ -2123,7 +2144,7 @@ window.deleteSale = async function(id) {
 
 window.filterSalesPeriod = function(p, el) {
   salesFilter = p;
-  document.querySelectorAll('#page-sales .period-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#page-bizsales .period-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderSales();
 };
