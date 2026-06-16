@@ -265,6 +265,7 @@
     <div class="nav" id="nav">
       <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>Dashboard</span></div>
       <div class="nav-item" data-page="bank"><span class="nav-icon">🏦</span><span>Bank</span></div>
+      <div class="nav-item" data-page="cash"><span class="nav-icon">💵</span><span>Cash in Hand</span></div>
       <div class="nav-item" data-page="income"><span class="nav-icon">💰</span><span>Income</span></div>
       <div class="nav-item" data-page="expenses"><span class="nav-icon">🧾</span><span>Expenses</span></div>
       <div class="nav-item" data-page="loans"><span class="nav-icon">🤝</span><span>Loans</span></div>
@@ -284,34 +285,42 @@
       <!-- MONEY REALITY PANEL -->
       <div style="background:linear-gradient(135deg,#1c2030 0%,#181d2e 100%);border:1px solid var(--border);border-radius:16px;padding:28px 32px;margin-bottom:24px;">
         <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:18px;">💰 Your Real Money Picture</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0;position:relative;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0;position:relative;">
 
-          <!-- Bank Balance -->
-          <div style="padding:0 24px 0 0;border-right:1px solid var(--border);">
+          <!-- Bank Balance (gross — before savings deduction) -->
+          <div style="padding:0 20px 0 0;border-right:1px solid var(--border);">
             <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">🏦 Bank Balance</div>
             <div style="font-size:2rem;font-weight:800;color:var(--accent2);" id="rp-bank">GYD $0</div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">Already excludes paid bills &amp; savings</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">Your total bank funds</div>
+          </div>
+
+          <!-- Cash in Hand -->
+          <div style="padding:0 20px;border-right:1px solid var(--border);">
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">💵 Cash in Hand</div>
+            <div style="font-size:2rem;font-weight:800;color:#3bc9db;" id="rp-cash">GYD $0</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">Physical cash on you</div>
           </div>
 
           <!-- Minus savings set aside -->
-          <div style="padding:0 24px;border-right:1px solid var(--border);">
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">🎯 Total Saved</div>
-            <div style="font-size:2rem;font-weight:800;color:var(--yellow);" id="rp-savings">GYD $0</div>
+          <div style="padding:0 20px;border-right:1px solid var(--border);">
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">🎯 Savings Set Aside</div>
+            <div style="font-size:2rem;font-weight:800;color:var(--yellow);" id="rp-savings">− GYD $0</div>
             <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;" id="rp-savings-sub">Across 0 goals</div>
           </div>
 
           <!-- Minus unpaid expenses -->
-          <div style="padding:0 24px;border-right:1px solid var(--border);">
+          <div style="padding:0 20px;border-right:1px solid var(--border);">
             <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">🧾 Unpaid Expenses Due</div>
             <div style="font-size:2rem;font-weight:800;color:var(--red);" id="rp-unpaid">− GYD $0</div>
             <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;" id="rp-unpaid-sub">0 bills pending</div>
           </div>
 
           <!-- ACTUAL available -->
-          <div style="padding:0 0 0 24px;">
+          <div style="padding:0 0 0 20px;">
             <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">✅ Actually Available</div>
             <div style="font-size:2rem;font-weight:800;" id="rp-actual">GYD $0</div>
-            <div style="font-size:0.75rem;margin-top:3px;" id="rp-actual-sub">After savings &amp; bills</div>
+            <div style="font-size:0.75rem;margin-top:3px;" id="rp-actual-sub">Bank − Savings − Bills</div>
+            <div style="font-size:0.7rem;color:var(--muted);margin-top:2px;" id="rp-actual-formula"></div>
           </div>
         </div>
 
@@ -491,6 +500,63 @@
       </div>
     </div>
 
+    <!-- ===== CASH IN HAND ===== -->
+    <div id="page-cash" class="page">
+      <div class="page-title">Cash in Hand</div>
+
+      <div class="grid-3 mb24">
+        <div class="stat-card">
+          <div class="stat-label">Current Cash on Hand</div>
+          <div class="stat-value green" id="cash-balance">GYD $0</div>
+          <div class="stat-sub">Physical cash you carry</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Added</div>
+          <div class="stat-value green" id="cash-total-in">GYD $0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Spent</div>
+          <div class="stat-value red" id="cash-total-out">GYD $0</div>
+        </div>
+      </div>
+
+      <div class="card mb24">
+        <div class="section-title mb16">Log Cash Movement</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Type</label>
+            <select id="c-type">
+              <option value="in">💚 Cash In (Received)</option>
+              <option value="out">🔴 Cash Out (Spent)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount (GYD)</label>
+            <input type="number" id="c-amount" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="c-desc" placeholder="e.g. Market spend, Change received"/>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="c-date"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addCash()">Log Cash</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title mb16">Cash Ledger</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Description</th><th>Cash In</th><th>Cash Out</th><th>Balance</th><th>Action</th></tr></thead>
+            <tbody id="cash-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== INCOME ===== -->
     <div id="page-income" class="page">
       <div class="page-title">Income</div>
@@ -631,6 +697,21 @@
             </select>
           </div>
         </div>
+        <!-- Optional itemized list -->
+        <div style="margin-top:4px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;color:var(--muted);">
+              <input type="checkbox" id="e-show-items" onchange="toggleExpItems()" style="accent-color:var(--accent);width:15px;height:15px;"/>
+              📋 Add itemized breakdown (list what you owe)
+            </label>
+          </div>
+          <div id="e-items-section" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;">
+            <div style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;">List each item you owe under this expense:</div>
+            <div id="e-items-list"></div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="addExpItemRow()">＋ Add Item</button>
+            <div style="margin-top:10px;font-size:0.82rem;color:var(--muted);">Items total: <strong id="e-items-total" style="color:var(--accent2)">GYD $0.00</strong></div>
+          </div>
+        </div>
         <button class="btn btn-primary" onclick="addExpense()">Add Expense</button>
       </div>
 
@@ -646,7 +727,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Recurring</th><th>Status</th><th>Action</th></tr></thead>
+            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Items</th><th>Recurring</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="expense-table"></tbody>
           </table>
         </div>
@@ -997,7 +1078,7 @@ const fmt = n => CUR + Number(n||0).toLocaleString('en-US', {minimumFractionDigi
 const today = () => new Date().toISOString().slice(0,10);
 
 // State
-let bankData = [], incomeData = [], expenseData = [], loanData = [], savingsData = [], bizData = [], salesData = [];
+let bankData = [], incomeData = [], expenseData = [], loanData = [], savingsData = [], bizData = [], salesData = [], cashData = [];
 let bankFilter = 'all', expFilter = 'all', bizFilter = 'all', salesFilter = 'all';
 let db, fs;
 
@@ -1056,11 +1137,11 @@ async function loadCol(col) {
 
 // ---- LOAD ALL ----
 async function loadAll() {
-  [bankData, incomeData, expenseData, loanData, savingsData, bizData, salesData] = await Promise.all([
+  [bankData, incomeData, expenseData, loanData, savingsData, bizData, salesData, cashData] = await Promise.all([
     loadCol('bankTransactions'), loadCol('income'), loadCol('expenses'),
-    loadCol('loans'), loadCol('savings'), loadCol('business'), loadCol('sales')
+    loadCol('loans'), loadCol('savings'), loadCol('business'), loadCol('sales'), loadCol('cashTransactions')
   ]);
-  renderBank(); renderIncome(); renderExpenses(); renderLoans(); renderSavings(); renderBusiness();
+  renderBank(); renderCash(); renderIncome(); renderExpenses(); renderLoans(); renderSavings(); renderBusiness();
   renderSales();
   renderDashboard();
 }
@@ -1340,8 +1421,9 @@ window.addExpense = async function() {
   const date = document.getElementById('e-date').value;
   const recurring = document.getElementById('e-recurring').value;
   const paid = document.getElementById('e-paid').value;
+  const items = getExpItems();
   if (!amount || !date) { toast('Enter amount and date', 'error'); return; }
-  const entry = {category: cat, desc, amount, date, recurring, paid, bankTxnId: null};
+  const entry = {category: cat, desc, amount, date, recurring, paid, items, bankTxnId: null};
   const id = await save('expenses', entry);
   if (paid === 'paid') {
     const bankTxnId = await createLinkedBankTxn({ amount, desc: 'Expense: ' + (desc||cat), category: cat, date, linkType: 'expense', linkId: id });
@@ -1351,6 +1433,7 @@ window.addExpense = async function() {
   renderExpenses(); renderBank(); renderDashboard();
   document.getElementById('e-amount').value = '';
   document.getElementById('e-desc').value = '';
+  resetExpItemsForm();
   toast('Expense added ✓' + (paid==='paid' ? ' (deducted from Bank)' : ''));
 };
 window.deleteExpense = async function(id) {
@@ -1403,12 +1486,31 @@ function renderExpenses() {
   document.getElementById('exp-paid').textContent = fmt(monthExp.filter(x=>x.paid==='paid').reduce((s,x)=>s+x.amount,0));
   document.getElementById('exp-year').textContent = fmt(expenseData.filter(x=>inPeriod(x.date,'year')).reduce((s,x)=>s+x.amount,0));
   const filtered = [...expenseData].filter(x => inPeriod(x.date, expFilter)).sort((a,b)=>a.date<b.date?1:-1);
-  document.getElementById('expense-table').innerHTML = filtered.map(r => `
-    <tr>
+  document.getElementById('expense-table').innerHTML = filtered.map(r => {
+    const items = r.items || [];
+    const itemsHtml = items.length
+      ? `<details style="cursor:pointer;">
+           <summary style="font-size:0.78rem;color:var(--accent);list-style:none;outline:none;">
+             📋 ${items.length} item${items.length!==1?'s':''} ▾
+           </summary>
+           <div style="margin-top:6px;padding:8px;background:var(--surface);border-radius:7px;border:1px solid var(--border);">
+             ${items.map(it=>`<div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:3px 0;border-bottom:1px solid rgba(37,42,58,0.4);">
+               <span style="color:var(--text)">${it.name||'Item'}</span>
+               <span style="color:var(--yellow);font-weight:600;">${fmt(it.amount)}</span>
+             </div>`).join('')}
+             <div style="display:flex;justify-content:space-between;font-size:0.78rem;padding:4px 0 0;font-weight:700;">
+               <span style="color:var(--muted)">Total</span>
+               <span style="color:var(--accent2)">${fmt(items.reduce((s,i)=>s+(i.amount||0),0))}</span>
+             </div>
+           </div>
+         </details>`
+      : '<span style="color:var(--muted);font-size:0.78rem;">—</span>';
+    return `<tr>
       <td>${r.date}</td>
       <td><span class="badge badge-blue">${r.category}</span></td>
       <td>${r.desc||'—'}</td>
       <td style="color:var(--red);font-weight:600">${fmt(r.amount)}</td>
+      <td style="min-width:120px;">${itemsHtml}</td>
       <td>${r.recurring ? '<span class="badge badge-teal">'+r.recurring+'</span>' : '—'}</td>
       <td>
         <span class="toggle-paid ${r.paid==='paid'?'paid':'unpaid'}" onclick="togglePaid('${r.id}','${r.paid}')">
@@ -1419,7 +1521,8 @@ function renderExpenses() {
         <button class="btn btn-ghost btn-xs" onclick="duplicateExpense('${r.id}')" title="Duplicate into the form above">📋</button>
         <button class="btn btn-danger btn-xs" onclick="deleteExpense('${r.id}')">Del</button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="7" class="empty"><div class="empty-icon">🧾</div><div class="empty-text">No expenses yet</div></td></tr>';
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" class="empty"><div class="empty-icon">🧾</div><div class="empty-text">No expenses yet</div></td></tr>';
 }
 
 // ======= LOANS =======
@@ -1656,47 +1759,160 @@ function renderBusiness() {
   });
 }
 
+// ======= CASH IN HAND =======
+window.addCash = async function() {
+  const type   = document.getElementById('c-type').value;
+  const amount = parseFloat(document.getElementById('c-amount').value);
+  const desc   = document.getElementById('c-desc').value.trim();
+  const date   = document.getElementById('c-date').value;
+  if (!amount || !date) { toast('Enter amount and date', 'error'); return; }
+  const entry = { type, amount, desc, date };
+  const id = await save('cashTransactions', entry);
+  cashData.push({ id, ...entry });
+  renderCash(); renderDashboard();
+  document.getElementById('c-amount').value = '';
+  document.getElementById('c-desc').value = '';
+  toast('Cash logged ✓');
+};
+
+window.deleteCash = async function(id) {
+  if (!confirm('Delete this cash entry?')) return;
+  await remove('cashTransactions', id);
+  cashData = cashData.filter(x => x.id !== id);
+  renderCash(); renderDashboard();
+  toast('Deleted');
+};
+
+function renderCash() {
+  const sorted = [...cashData].sort((a,b) => a.date < b.date ? 1 : -1);
+  let running = 0;
+  const withBal = [...sorted].reverse().map(r => {
+    running += r.type === 'in' ? r.amount : -r.amount;
+    return { ...r, balance: running };
+  }).reverse();
+  const balance  = running;
+  const totalIn  = sorted.reduce((s,x) => x.type==='in'  ? s+x.amount : s, 0);
+  const totalOut = sorted.reduce((s,x) => x.type==='out' ? s+x.amount : s, 0);
+  document.getElementById('cash-balance').textContent   = fmt(balance);
+  document.getElementById('cash-total-in').textContent  = fmt(totalIn);
+  document.getElementById('cash-total-out').textContent = fmt(totalOut);
+  const balMap = {};
+  withBal.forEach(r => balMap[r.id] = r.balance);
+  document.getElementById('cash-table').innerHTML = sorted.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td>${r.desc||'—'}</td>
+      <td style="color:var(--green)">${r.type==='in'  ? fmt(r.amount) : ''}</td>
+      <td style="color:var(--red)">${r.type==='out' ? fmt(r.amount) : ''}</td>
+      <td style="font-weight:600;color:${(balMap[r.id]||0)>=0?'var(--green)':'var(--red)'}">${fmt(balMap[r.id])}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="deleteCash('${r.id}')">Del</button></td>
+    </tr>`).join('') || '<tr><td colspan="6" class="empty"><div class="empty-icon">💵</div><div class="empty-text">No cash entries yet</div></td></tr>';
+}
+
+// ======= EXPENSE ITEM ROWS =======
+let expItemRowId = 0;
+
+window.toggleExpItems = function() {
+  const show = document.getElementById('e-show-items').checked;
+  document.getElementById('e-items-section').style.display = show ? 'block' : 'none';
+  if (show && document.getElementById('e-items-list').children.length === 0) addExpItemRow();
+};
+
+window.addExpItemRow = function() {
+  const id = ++expItemRowId;
+  const row = document.createElement('div');
+  row.id = 'eitem-' + id;
+  row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:7px;';
+  row.innerHTML = `
+    <input type="text"   class="sale-item-input" placeholder="Item name"  id="ei-name-${id}" style="flex:2;" oninput="updateExpItemsTotal()"/>
+    <input type="number" class="sale-item-input" placeholder="Amount"     id="ei-amt-${id}"  style="flex:1;" oninput="updateExpItemsTotal()"/>
+    <button class="btn btn-danger btn-xs" onclick="removeExpItemRow(${id})">✕</button>`;
+  document.getElementById('e-items-list').appendChild(row);
+};
+
+window.removeExpItemRow = function(id) {
+  const el = document.getElementById('eitem-' + id);
+  if (el) el.remove();
+  updateExpItemsTotal();
+};
+
+window.updateExpItemsTotal = function() {
+  let total = 0;
+  document.querySelectorAll('#e-items-list > div').forEach(row => {
+    const id = row.id.replace('eitem-','');
+    total += parseFloat(document.getElementById('ei-amt-'+id)?.value||0);
+  });
+  document.getElementById('e-items-total').textContent = fmt(total);
+};
+
+function getExpItems() {
+  const items = [];
+  document.querySelectorAll('#e-items-list > div').forEach(row => {
+    const id   = row.id.replace('eitem-','');
+    const name = document.getElementById('ei-name-'+id)?.value.trim() || '';
+    const amt  = parseFloat(document.getElementById('ei-amt-'+id)?.value||0);
+    if (name || amt) items.push({ name, amount: amt });
+  });
+  return items;
+}
+
+function resetExpItemsForm() {
+  document.getElementById('e-show-items').checked = false;
+  document.getElementById('e-items-section').style.display = 'none';
+  document.getElementById('e-items-list').innerHTML = '';
+  document.getElementById('e-items-total').textContent = fmt(0);
+  expItemRowId = 0;
+}
+
 // ======= DASHBOARD =======
 let catChart = null, flowChart = null;
 function renderDashboard() {
   renderRecurringDue();
 
-  // ---- Bank balance ----
-  // This already has paid expenses AND savings contributions withdrawn
-  // automatically, so it reflects what's truly sitting in the account.
+  // ---- Gross bank balance (raw deposits minus all withdrawals) ----
   let bankBal = 0;
   bankData.forEach(x => { bankBal += x.type==='deposit' ? x.amount : -x.amount; });
 
-  // ---- Total saved (already moved out of Bank Balance above; shown for reference) ----
+  // ---- Gross bank = bankBal + savings already withdrawn via linked txns ----
+  // We display the raw bank figure; savings are shown as a separate deduction.
+  const savingsLinkedOut = savingsData.reduce((s,x) => s + ((x.bankTxnId && x.saved>0) ? (x.saved||0) : 0), 0);
+  const grossBank = bankBal + savingsLinkedOut;
+
+  // ---- Total saved across all goals ----
   const totalSaved   = savingsData.reduce((s,x)=>s+(x.saved||0),0);
   const savingsGoals = savingsData.length;
 
-  // ---- Unpaid expenses coming up (still sitting in Bank — hasn't left yet) ----
-  const unpaidItems    = expenseData.filter(x=>x.paid==='unpaid');
-  const totalUnpaid    = unpaidItems.reduce((s,x)=>s+x.amount,0);
-  const unpaidCount    = unpaidItems.length;
+  // ---- Cash in hand ----
+  let cashBal = 0;
+  cashData.forEach(x => { cashBal += x.type==='in' ? x.amount : -x.amount; });
 
-  // ---- All the money you actually have right now (spendable + saved) ----
-  const totalMoney = bankBal + totalSaved;
+  // ---- Unpaid expenses ----
+  const unpaidItems = expenseData.filter(x=>x.paid==='unpaid');
+  const totalUnpaid = unpaidItems.reduce((s,x)=>s+x.amount,0);
+  const unpaidCount = unpaidItems.length;
 
-  // ---- Actually available = what's free to spend once upcoming bills are paid ----
-  const actualAvail = bankBal - totalUnpaid;
+  // ---- ACTUALLY AVAILABLE = Bank − Savings − Unpaid Expenses ----
+  // Example: Bank $8,000 − Savings $3,000 − Unpaid $2,000 = $3,000
+  const actualAvail = grossBank - totalSaved - totalUnpaid;
 
   // ---- Populate reality panel ----
-  document.getElementById('rp-bank').textContent        = fmt(bankBal);
-  document.getElementById('rp-savings').textContent     = fmt(totalSaved);
-  document.getElementById('rp-savings-sub').textContent = 'Already moved out · ' + savingsGoals + ' goal' + (savingsGoals!==1?'s':'');
+  document.getElementById('rp-bank').textContent        = fmt(grossBank);
+  document.getElementById('rp-cash').textContent        = fmt(cashBal);
+  document.getElementById('rp-savings').textContent     = '− ' + fmt(totalSaved);
+  document.getElementById('rp-savings-sub').textContent = savingsGoals + ' goal' + (savingsGoals!==1?'s':'');
   document.getElementById('rp-unpaid').textContent      = '− ' + fmt(totalUnpaid);
   document.getElementById('rp-unpaid-sub').textContent  = unpaidCount + ' bill' + (unpaidCount!==1?'s':'') + ' pending';
   const actualEl = document.getElementById('rp-actual');
-  actualEl.textContent   = fmt(actualAvail);
-  actualEl.style.color   = actualAvail >= 0 ? 'var(--green)' : 'var(--red)';
+  actualEl.textContent = fmt(actualAvail);
+  actualEl.style.color = actualAvail >= 0 ? 'var(--green)' : 'var(--red)';
   const actualSub = document.getElementById('rp-actual-sub');
-  actualSub.textContent  = actualAvail >= 0 ? 'You\'re in the clear ✓ (Profit)' : 'Shortfall — you\'re in the minus';
-  actualSub.style.color  = actualAvail >= 0 ? 'var(--green)' : 'var(--red)';
+  actualSub.textContent = actualAvail >= 0 ? 'You\'re in the clear ✓' : 'Shortfall — you\'re in the minus';
+  actualSub.style.color = actualAvail >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('rp-actual-formula').textContent =
+    fmt(grossBank) + ' − ' + fmt(totalSaved) + ' − ' + fmt(totalUnpaid) + ' = ' + fmt(actualAvail);
 
-  // ---- Breakdown bar (out of everything you currently have: spendable + saved) ----
-  const barTotal = Math.max(totalMoney, 0.01);
+  // ---- Breakdown bar ----
+  const barTotal = Math.max(grossBank, 0.01);
   const pAvail = Math.max(0, Math.min(100, (actualAvail / barTotal) * 100));
   const pSave  = Math.max(0, Math.min(100 - pAvail, (totalSaved / barTotal) * 100));
   const pBills = Math.max(0, Math.min(100 - pAvail - pSave, (totalUnpaid / barTotal) * 100));
