@@ -296,6 +296,7 @@
       <div class="nav-item" data-page="loans"><span class="nav-icon">🤝</span><span>Loans</span></div>
       <div class="nav-item" data-page="savings"><span class="nav-icon">🎯</span><span>Savings</span></div>
       <div class="nav-item" data-page="bizsales"><span class="nav-icon">📈</span><span>Business &amp; Sales</span></div>
+      <div class="nav-item" data-page="mom"><span class="nav-icon">👩</span><span>Mom's Money</span></div>
     </div>
     <div style="padding:16px 20px;border-top:1px solid var(--border);margin-top:auto;">
       <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">Logged in as <strong id="user-name" style="color:var(--text);">—</strong></div>
@@ -348,9 +349,8 @@
             <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">👩 Mom's Money (in bank)</div>
             <div style="font-size:2rem;font-weight:800;color:var(--yellow);" id="rp-mom">− GYD $0</div>
             <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">Not your money</div>
-            <div style="margin-top:8px;display:flex;gap:6px;align-items:center;" id="mom-edit-row">
-              <input type="number" id="mom-input" placeholder="0.00" style="width:100px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.82rem;" onkeydown="if(event.key==='Enter')saveMomMoney()"/>
-              <button class="btn btn-xs" style="background:var(--accent);color:#fff;padding:4px 10px;border-radius:6px;font-size:0.78rem;" onclick="saveMomMoney()">Set</button>
+            <div style="margin-top:8px;">
+              <span onclick="document.querySelector('[data-page=mom]').click()" style="font-size:0.75rem;color:var(--accent);cursor:pointer;text-decoration:underline;">Manage Mom's ledger →</span>
             </div>
           </div>
 
@@ -1041,6 +1041,72 @@
       </div>
     </div>
 
+    <!-- ===== MOM'S MONEY ===== -->
+    <div id="page-mom" class="page">
+      <div class="page-title">👩 Mom's Money</div>
+
+      <div class="grid-3 mb24">
+        <div class="stat-card">
+          <div class="stat-label">Mom's Bank Balance</div>
+          <div class="stat-value yellow" id="mom-bank-bal">GYD $0</div>
+          <div class="stat-sub">Sitting in your bank</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Put In</div>
+          <div class="stat-value green" id="mom-total-in">GYD $0</div>
+          <div class="stat-sub">Mom's deposits</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Spent for Mom</div>
+          <div class="stat-value red" id="mom-total-out">GYD $0</div>
+          <div class="stat-sub">All purchases</div>
+        </div>
+      </div>
+
+      <div class="card mb24">
+        <div class="section-title mb16">Add Transaction</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Type</label>
+            <select id="mom-type" onchange="toggleMomPayvia()">
+              <option value="in">Mom added money to bank</option>
+              <option value="out">Bought something for Mom</option>
+            </select>
+          </div>
+          <div class="form-group" id="mom-payvia-group" style="display:none;">
+            <label>Paid from</label>
+            <select id="mom-payvia">
+              <option value="bank">Bank</option>
+              <option value="cash">Cash in Hand</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount (GYD)</label>
+            <input type="number" id="mom-amount" placeholder="0.00"/>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="mom-desc" placeholder="e.g. Groceries, Medicine, Deposit"/>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="mom-date"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addMomTxn()">Add</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title mb16">Mom's Ledger</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Paid From</th><th>Amount</th><th>Action</th></tr></thead>
+            <tbody id="mom-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -1123,6 +1189,7 @@ let bankData = [], incomeData = [], expenseData = [], loanData = [], savingsData
 let bankFilter = 'all', expFilter = 'all', bizFilter = 'all', salesFilter = 'all';
 let db, fs, auth, authFns, currentUser = null;
 let momMoney = 0;
+let momTxnData = [];
 const VALID_USERS = ['cindy', 'rose'];
 
 function userPath(col) {
@@ -1212,39 +1279,97 @@ async function loadCol(col) {
   } catch(e) { return []; }
 }
 
-async function loadMomMoney() {
-  if (!currentUser) return 0;
-  try {
-    const snap = await fs.get(fs.ref(db, userPath('momMoney')));
-    return snap.exists() ? (parseFloat(snap.val()) || 0) : 0;
-  } catch(e) { return 0; }
-}
-
-window.saveMomMoney = async function() {
-  const val = parseFloat(document.getElementById('mom-input').value) || 0;
-  if (!currentUser) { toast('Not logged in', 'error'); return; }
-  try {
-    await fs.set(fs.ref(db, userPath('momMoney')), val);
-    momMoney = val;
-    document.getElementById('mom-input').value = '';
-    renderDashboard();
-    toast("Mom's money updated ✓");
-  } catch(e) { toast('Error saving: ' + e.message, 'error'); }
-};
-
 // ---- LOAD ALL ----
 async function loadAll() {
   if (!currentUser) return;
-  [[bankData, incomeData, expenseData, loanData, savingsData, bizData, salesData, cashData], momMoney] = await Promise.all([
-    Promise.all([
-      loadCol('bankTransactions'), loadCol('income'), loadCol('expenses'),
-      loadCol('loans'), loadCol('savings'), loadCol('business'), loadCol('sales'), loadCol('cashTransactions')
-    ]),
-    loadMomMoney()
+  [bankData, incomeData, expenseData, loanData, savingsData, bizData, salesData, cashData, momTxnData] = await Promise.all([
+    loadCol('bankTransactions'), loadCol('income'), loadCol('expenses'),
+    loadCol('loans'), loadCol('savings'), loadCol('business'), loadCol('sales'),
+    loadCol('cashTransactions'), loadCol('momTransactions')
   ]);
+  momMoney = momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)
+           - momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
   renderBank(); renderCash(); renderIncome(); renderExpenses(); renderLoans(); renderSavings(); renderBusiness();
-  renderSales();
+  renderSales(); renderMom();
   renderDashboard();
+}
+
+// ======= MOM'S MONEY =======
+window.toggleMomPayvia = function() {
+  const type = document.getElementById('mom-type').value;
+  document.getElementById('mom-payvia-group').style.display = type === 'out' ? '' : 'none';
+};
+
+window.addMomTxn = async function() {
+  const type = document.getElementById('mom-type').value;
+  const payvia = type === 'out' ? document.getElementById('mom-payvia').value : 'bank';
+  const amount = parseFloat(document.getElementById('mom-amount').value);
+  const desc = document.getElementById('mom-desc').value.trim();
+  const date = document.getElementById('mom-date').value;
+  if (!amount || !desc || !date) { toast('Fill amount, description, date', 'error'); return; }
+
+  const entry = {type, payvia, amount, desc, date};
+  const id = await save('momTransactions', entry);
+  momTxnData.push({id, ...entry});
+
+  if (type === 'out' && payvia === 'bank') {
+    const bEntry = {type:'withdrawal', category:'Mom', desc:'Bought for Mom: '+desc, amount, date, auto: false};
+    const bid = await save('bankTransactions', bEntry);
+    bankData.push({id:bid, ...bEntry});
+    renderBank();
+  } else if (type === 'out' && payvia === 'cash') {
+    const cEntry = {type:'out', desc:'Bought for Mom: '+desc, amount, date};
+    const cid = await save('cashTransactions', cEntry);
+    cashData.push({id:cid, ...cEntry});
+    renderCash();
+  } else if (type === 'in') {
+    const bEntry = {type:'deposit', category:'Mom', desc:"Mom's deposit", amount, date, auto: false};
+    const bid = await save('bankTransactions', bEntry);
+    bankData.push({id:bid, ...bEntry});
+    renderBank();
+  }
+
+  momMoney = momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)
+           - momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
+
+  renderMom(); renderDashboard();
+  document.getElementById('mom-amount').value = '';
+  document.getElementById('mom-desc').value = '';
+  toast('Added ✓');
+};
+
+window.deleteMomTxn = async function(id) {
+  if (!confirm('Delete this entry?')) return;
+  await remove('momTransactions', id);
+  momTxnData = momTxnData.filter(x => x.id !== id);
+  momMoney = momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)
+           - momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
+  renderMom(); renderDashboard();
+  toast('Deleted');
+};
+
+function renderMom() {
+  const totalIn  = momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0);
+  const totalOut = momTxnData.filter(x=>x.type==='out').reduce((s,x)=>s+x.amount,0);
+  const bankBal  = totalIn - momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
+  document.getElementById('mom-bank-bal').textContent  = fmt(bankBal);
+  document.getElementById('mom-total-in').textContent  = fmt(totalIn);
+  document.getElementById('mom-total-out').textContent = fmt(totalOut);
+  const sorted = [...momTxnData].sort((a,b)=>a.date<b.date?1:-1);
+  document.getElementById('mom-table').innerHTML = sorted.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td style="font-weight:600">${r.desc}</td>
+      <td><span class="badge ${r.type==='in'?'badge-green':'badge-red'}">${r.type==='in'?'💰 Mom deposited':'🛒 Bought for Mom'}</span></td>
+      <td style="font-size:0.82rem;color:var(--muted)">${r.type==='out'?(r.payvia==='bank'?'🏦 Bank':'💵 Cash'):'🏦 Bank'}</td>
+      <td style="font-weight:600;color:${r.type==='in'?'var(--green)':'var(--red)'}">${r.type==='in'?'+':'-'}${fmt(r.amount)}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="deleteMomTxn('${r.id}')">Del</button></td>
+    </tr>`).join('') || '<tr><td colspan="6" class="empty"><div class="empty-icon">👩</div><div class="empty-text">No transactions yet</div></td></tr>';
+
+  // Set the date input default
+  if (!document.getElementById('mom-date').value) {
+    document.getElementById('mom-date').value = today();
+  }
 }
 
 // ---- LOGIN / LOGOUT ----
