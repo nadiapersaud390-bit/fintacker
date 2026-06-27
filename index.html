@@ -616,6 +616,17 @@
             <input type="number" id="i-amount" placeholder="0.00"/>
           </div>
           <div class="form-group">
+            <label>Paid via</label>
+            <select id="i-payvia" onchange="toggleIncomeDeposit()">
+              <option value="bank">Bank Transfer</option>
+              <option value="cash">Cash in Hand</option>
+            </select>
+          </div>
+          <div class="form-group" id="i-deposit-group" style="display:none;">
+            <label>Amount Deposited to Bank (GYD)</label>
+            <input type="number" id="i-deposit" placeholder="0.00 — leave blank if none"/>
+          </div>
+          <div class="form-group">
             <label>Frequency</label>
             <select id="i-freq">
               <option value="weekly">Weekly</option>
@@ -642,7 +653,7 @@
         <div class="section-title mb16">Income History</div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Date</th><th>Source</th><th>Amount</th><th>Frequency</th><th>Notes</th><th>Action</th></tr></thead>
+            <thead><tr><th>Date</th><th>Source</th><th>Amount</th><th>Paid via</th><th>Frequency</th><th>Notes</th><th>Action</th></tr></thead>
             <tbody id="income-table"></tbody>
           </table>
         </div>
@@ -1449,19 +1460,53 @@ function renderBank() {
 }
 
 // ======= INCOME =======
+window.toggleIncomeDeposit = function() {
+  const via = document.getElementById('i-payvia').value;
+  document.getElementById('i-deposit-group').style.display = via === 'cash' ? '' : 'none';
+  if (via === 'bank') document.getElementById('i-deposit').value = '';
+};
+
 window.addIncome = async function() {
   const source = document.getElementById('i-source').value.trim();
   const amount = parseFloat(document.getElementById('i-amount').value);
   const freq = document.getElementById('i-freq').value;
   const date = document.getElementById('i-date').value;
   const notes = document.getElementById('i-notes').value;
+  const payvia = document.getElementById('i-payvia').value;
+  const depositAmt = parseFloat(document.getElementById('i-deposit').value) || 0;
   if (!source || !amount || !date) { toast('Fill source, amount, date', 'error'); return; }
-  const entry = {source, amount, frequency: freq, date, notes};
+
+  const entry = {source, amount, frequency: freq, date, notes, payvia};
+  if (payvia === 'cash') entry.depositToBank = depositAmt;
+
   const id = await save('income', entry);
   incomeData.push({id, ...entry});
-  renderIncome(); renderDashboard();
+
+  if (payvia === 'bank') {
+    // Auto-create bank deposit for the full amount
+    const bankEntry = {type:'deposit', category:'Income', desc: source, amount, date, auto: false, notes: 'From income: ' + source};
+    const bid = await save('bankTransactions', bankEntry);
+    bankData.push({id: bid, ...bankEntry});
+  } else if (payvia === 'cash') {
+    // Add full amount as cash in
+    const cashIn = {type:'in', desc: 'Income: ' + source, amount, date, notes};
+    const cid = await save('cashTransactions', cashIn);
+    cashData.push({id: cid, ...cashIn});
+    // If some was deposited to bank, create cash-out + bank deposit
+    if (depositAmt > 0) {
+      const cashOut = {type:'out', desc: 'Deposited to bank', amount: depositAmt, date, notes: 'From income: ' + source};
+      const cod = await save('cashTransactions', cashOut);
+      cashData.push({id: cod, ...cashOut});
+      const bankEntry = {type:'deposit', category:'Income', desc: source + ' (cash deposit)', amount: depositAmt, date, auto: false, notes: 'Cash deposit from income'};
+      const bid = await save('bankTransactions', bankEntry);
+      bankData.push({id: bid, ...bankEntry});
+    }
+  }
+
+  renderIncome(); renderDashboard(); renderBank(); renderCash();
   document.getElementById('i-source').value = '';
   document.getElementById('i-amount').value = '';
+  document.getElementById('i-deposit').value = '';
   document.getElementById('i-notes').value = '';
   toast('Income logged ✓');
 };
@@ -1479,6 +1524,9 @@ window.duplicateIncome = function(id) {
   document.getElementById('i-freq').value = r.frequency || 'monthly';
   document.getElementById('i-date').value = today();
   document.getElementById('i-notes').value = r.notes || '';
+  document.getElementById('i-payvia').value = r.payvia || 'bank';
+  document.getElementById('i-deposit').value = r.depositToBank || '';
+  toggleIncomeDeposit();
   document.getElementById('i-amount').focus();
   document.querySelector('#page-income .card').scrollIntoView({behavior:'smooth', block:'start'});
   toast('Loaded into the form above — adjust & click Add');
@@ -1491,18 +1539,24 @@ function renderIncome() {
   document.getElementById('inc-year').textContent = fmt(thisYear);
   document.getElementById('inc-sources').textContent = [...new Set(incomeData.map(x=>x.source))].length;
   const sorted = [...incomeData].sort((a,b) => a.date<b.date?1:-1);
-  document.getElementById('income-table').innerHTML = sorted.map(r => `
+  document.getElementById('income-table').innerHTML = sorted.map(r => {
+    const viaLabel = r.payvia === 'cash'
+      ? '💵 Cash' + (r.depositToBank > 0 ? ` (+${fmt(r.depositToBank)} to bank)` : '')
+      : '🏦 Bank';
+    return `
     <tr>
       <td>${r.date}</td>
       <td style="font-weight:600">${r.source}</td>
       <td style="color:var(--green);font-weight:600">${fmt(r.amount)}</td>
+      <td style="font-size:0.82rem">${viaLabel}</td>
       <td><span class="badge badge-blue">${r.frequency}</span></td>
       <td style="color:var(--muted)">${r.notes||'—'}</td>
       <td style="display:flex;gap:4px;">
         <button class="btn btn-ghost btn-xs" onclick="duplicateIncome('${r.id}')" title="Duplicate into the form above">📋</button>
         <button class="btn btn-danger btn-xs" onclick="deleteIncome('${r.id}')">Del</button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="6" class="empty"><div class="empty-icon">💰</div><div class="empty-text">No income logged yet</div></td></tr>';
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="empty"><div class="empty-icon">💰</div><div class="empty-text">No income logged yet</div></td></tr>';
 }
 
 // ======= EXPENSES =======
