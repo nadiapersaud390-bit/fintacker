@@ -2206,7 +2206,6 @@ function renderDashboard() {
   document.getElementById('rp-unpaid').textContent      = '− ' + fmt(totalUnpaid);
   document.getElementById('rp-unpaid-sub').textContent  = unpaidCount + ' bill' + (unpaidCount!==1?'s':'') + ' pending';
   document.getElementById('rp-mom').textContent         = momMoney > 0 ? '− ' + fmt(momMoney) : fmt(0);
-  document.getElementById('mom-input').placeholder      = momMoney > 0 ? fmt(momMoney) : '0.00';
   const actualEl = document.getElementById('rp-actual');
   actualEl.textContent = fmt(actualAvail);
   actualEl.style.color = actualAvail >= 0 ? 'var(--green)' : 'var(--red)';
