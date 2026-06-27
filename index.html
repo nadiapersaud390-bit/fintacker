@@ -343,11 +343,22 @@
             <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;" id="rp-unpaid-sub">0 bills pending</div>
           </div>
 
+          <!-- Mom's Money -->
+          <div style="padding:0 20px;border-right:1px solid var(--border);">
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">👩 Mom's Money (in bank)</div>
+            <div style="font-size:2rem;font-weight:800;color:var(--yellow);" id="rp-mom">− GYD $0</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:3px;">Not your money</div>
+            <div style="margin-top:8px;display:flex;gap:6px;align-items:center;" id="mom-edit-row">
+              <input type="number" id="mom-input" placeholder="0.00" style="width:100px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.82rem;" onkeydown="if(event.key==='Enter')saveMomMoney()"/>
+              <button class="btn btn-xs" style="background:var(--accent);color:#fff;padding:4px 10px;border-radius:6px;font-size:0.78rem;" onclick="saveMomMoney()">Set</button>
+            </div>
+          </div>
+
           <!-- ACTUAL available -->
           <div style="padding:0 0 0 20px;">
             <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">✅ Actually Available</div>
             <div style="font-size:2rem;font-weight:800;" id="rp-actual">GYD $0</div>
-            <div style="font-size:0.75rem;margin-top:3px;" id="rp-actual-sub">Bank − Savings − Bills</div>
+            <div style="font-size:0.75rem;margin-top:3px;" id="rp-actual-sub">Bank − Bills − Mom's</div>
             <div style="font-size:0.7rem;color:var(--muted);margin-top:2px;" id="rp-actual-formula"></div>
           </div>
         </div>
@@ -1111,6 +1122,7 @@ const today = () => new Date().toISOString().slice(0,10);
 let bankData = [], incomeData = [], expenseData = [], loanData = [], savingsData = [], bizData = [], salesData = [], cashData = [];
 let bankFilter = 'all', expFilter = 'all', bizFilter = 'all', salesFilter = 'all';
 let db, fs, auth, authFns, currentUser = null;
+let momMoney = 0;
 const VALID_USERS = ['cindy', 'rose'];
 
 function userPath(col) {
@@ -1200,12 +1212,35 @@ async function loadCol(col) {
   } catch(e) { return []; }
 }
 
+async function loadMomMoney() {
+  if (!currentUser) return 0;
+  try {
+    const snap = await fs.get(fs.ref(db, userPath('momMoney')));
+    return snap.exists() ? (parseFloat(snap.val()) || 0) : 0;
+  } catch(e) { return 0; }
+}
+
+window.saveMomMoney = async function() {
+  const val = parseFloat(document.getElementById('mom-input').value) || 0;
+  if (!currentUser) { toast('Not logged in', 'error'); return; }
+  try {
+    await fs.set(fs.ref(db, userPath('momMoney')), val);
+    momMoney = val;
+    document.getElementById('mom-input').value = '';
+    renderDashboard();
+    toast("Mom's money updated ✓");
+  } catch(e) { toast('Error saving: ' + e.message, 'error'); }
+};
+
 // ---- LOAD ALL ----
 async function loadAll() {
   if (!currentUser) return;
-  [bankData, incomeData, expenseData, loanData, savingsData, bizData, salesData, cashData] = await Promise.all([
-    loadCol('bankTransactions'), loadCol('income'), loadCol('expenses'),
-    loadCol('loans'), loadCol('savings'), loadCol('business'), loadCol('sales'), loadCol('cashTransactions')
+  [[bankData, incomeData, expenseData, loanData, savingsData, bizData, salesData, cashData], momMoney] = await Promise.all([
+    Promise.all([
+      loadCol('bankTransactions'), loadCol('income'), loadCol('expenses'),
+      loadCol('loans'), loadCol('savings'), loadCol('business'), loadCol('sales'), loadCol('cashTransactions')
+    ]),
+    loadMomMoney()
   ]);
   renderBank(); renderCash(); renderIncome(); renderExpenses(); renderLoans(); renderSavings(); renderBusiness();
   renderSales();
@@ -2034,9 +2069,9 @@ function renderDashboard() {
   const totalUnpaid = unpaidItems.reduce((s,x)=>s+x.amount,0);
   const unpaidCount = unpaidItems.length;
 
-  // ---- ACTUALLY AVAILABLE = Bank Balance − Unpaid Expenses ----
+  // ---- ACTUALLY AVAILABLE = Bank Balance − Unpaid Expenses − Mom's Money ----
   // Savings are already deducted from bank via linked withdrawal transactions.
-  const actualAvail = bankBal - totalUnpaid;
+  const actualAvail = bankBal - totalUnpaid - momMoney;
 
   // ---- Populate reality panel ----
   document.getElementById('rp-bank').textContent        = fmt(bankBal);
@@ -2045,6 +2080,8 @@ function renderDashboard() {
   document.getElementById('rp-savings-sub').textContent = savingsGoals + ' goal' + (savingsGoals!==1?'s':'') + ' · already in Bank';
   document.getElementById('rp-unpaid').textContent      = '− ' + fmt(totalUnpaid);
   document.getElementById('rp-unpaid-sub').textContent  = unpaidCount + ' bill' + (unpaidCount!==1?'s':'') + ' pending';
+  document.getElementById('rp-mom').textContent         = momMoney > 0 ? '− ' + fmt(momMoney) : fmt(0);
+  document.getElementById('mom-input').placeholder      = momMoney > 0 ? fmt(momMoney) : '0.00';
   const actualEl = document.getElementById('rp-actual');
   actualEl.textContent = fmt(actualAvail);
   actualEl.style.color = actualAvail >= 0 ? 'var(--green)' : 'var(--red)';
@@ -2052,13 +2089,13 @@ function renderDashboard() {
   actualSub.textContent = actualAvail >= 0 ? 'You\'re in the clear ✓' : 'Shortfall — you\'re in the minus';
   actualSub.style.color = actualAvail >= 0 ? 'var(--green)' : 'var(--red)';
   document.getElementById('rp-actual-formula').textContent =
-    'Bank ' + fmt(bankBal) + ' − Unpaid ' + fmt(totalUnpaid) + ' = ' + fmt(actualAvail) + '  (savings already in bank)';
+    'Bank ' + fmt(bankBal) + ' − Unpaid ' + fmt(totalUnpaid) + ' − Mom\'s ' + fmt(momMoney) + ' = ' + fmt(actualAvail);
 
   // ---- Breakdown bar (out of bank balance) ----
   const barTotal = Math.max(Math.abs(bankBal), 0.01);
   const pAvail = Math.max(0, Math.min(100, (actualAvail / barTotal) * 100));
   const pSave  = Math.max(0, Math.min(100 - pAvail, (totalSaved / barTotal) * 100));
-  const pBills = Math.max(0, Math.min(100 - pAvail - pSave, (totalUnpaid / barTotal) * 100));
+  const pBills = Math.max(0, Math.min(100 - pAvail - pSave, ((totalUnpaid + momMoney) / barTotal) * 100));
   document.getElementById('rp-bar-avail').style.width = pAvail + '%';
   document.getElementById('rp-bar-save').style.width  = pSave  + '%';
   document.getElementById('rp-bar-bills').style.width = pBills + '%';
