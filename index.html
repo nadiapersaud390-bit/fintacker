@@ -31,7 +31,6 @@
   window._fs = { ref, push, get, update, remove, onValue, set };
   window._auth = auth;
   window._authFns = { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged };
-  window.dispatchEvent(new Event('firebase-ready'));
 </script>
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -1128,17 +1127,15 @@ function showApp() {
   document.getElementById('user-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-// Wait for Firebase
-window.addEventListener('firebase-ready', () => {
-  db = window._db;
-  fs = window._fs;
-  auth = window._auth;
-  authFns = window._authFns;
-  authFns.onAuthStateChanged(auth, (user) => {
-    currentUser = user;
-    if (user) { showApp(); loadAll(); }
-    else { showLogin(); }
-  });
+// Initialize Firebase references (both scripts are modules, run in order)
+db = window._db;
+fs = window._fs;
+auth = window._auth;
+authFns = window._authFns;
+authFns.onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  if (user) { showApp(); loadAll(); }
+  else { showLogin(); }
 });
 
 // Set default dates
@@ -1216,11 +1213,18 @@ window.doLogin = async function() {
     await authFns.signInWithEmailAndPassword(auth, email, password);
     errEl.style.display = 'none';
   } catch (e) {
-    if (e.code === 'auth/user-not-found') {
+    if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials') {
       try {
         await authFns.createUserWithEmailAndPassword(auth, email, password);
         errEl.style.display = 'none';
-      } catch (ce) { errEl.textContent = 'Error creating account: ' + ce.message; errEl.style.display = 'block'; }
+      } catch (ce) {
+        if (ce.code === 'auth/email-already-in-use') {
+          errEl.textContent = 'Wrong password. Try again.';
+        } else {
+          errEl.textContent = 'Error creating account: ' + ce.message;
+        }
+        errEl.style.display = 'block';
+      }
     } else {
       errEl.textContent = 'Login failed: ' + e.message; errEl.style.display = 'block';
     }
