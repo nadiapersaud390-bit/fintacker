@@ -741,9 +741,16 @@
           </div>
           <div class="form-group">
             <label>Status</label>
-            <select id="e-paid">
+            <select id="e-paid" onchange="toggleExpPayvia()">
               <option value="paid">✅ Paid</option>
               <option value="unpaid">⏳ Not Paid Yet</option>
+            </select>
+          </div>
+          <div class="form-group" id="e-payvia-group">
+            <label>Paid from</label>
+            <select id="e-payvia">
+              <option value="bank">🏦 Bank</option>
+              <option value="cash">💵 Cash in Hand</option>
             </select>
           </div>
         </div>
@@ -1523,7 +1530,7 @@ async function deleteLinkedBankTxn(bankTxnId) {
 window.syncBankLinks = async function() {
   let created = 0;
   for (const exp of expenseData) {
-    if (exp.paid === 'paid' && !exp.bankTxnId) {
+    if (exp.paid === 'paid' && exp.paidVia !== 'cash' && !exp.bankTxnId) {
       const bankTxnId = await createLinkedBankTxn({ amount: exp.amount, desc: 'Expense: ' + (exp.desc || exp.category), category: exp.category, date: exp.date, linkType: 'expense', linkId: exp.id });
       if (bankTxnId) { await update('expenses', exp.id, { bankTxnId }); exp.bankTxnId = bankTxnId; created++; }
     }
@@ -1720,6 +1727,10 @@ function renderIncome() {
 }
 
 // ======= EXPENSES =======
+function toggleExpPayvia() {
+  const paid = document.getElementById('e-paid').value;
+  document.getElementById('e-payvia-group').style.display = paid === 'paid' ? '' : 'none';
+}
 window.addExpense = async function() {
   const cat = document.getElementById('e-cat').value;
   const desc = document.getElementById('e-desc').value.trim();
@@ -1727,28 +1738,40 @@ window.addExpense = async function() {
   const date = document.getElementById('e-date').value;
   const recurring = document.getElementById('e-recurring').value;
   const paid = document.getElementById('e-paid').value;
+  const paidVia = paid === 'paid' ? document.getElementById('e-payvia').value : '';
   const items = getExpItems();
   if (!amount || !date) { toast('Enter amount and date', 'error'); return; }
-  const entry = {category: cat, desc, amount, date, recurring, paid, items, bankTxnId: null};
+  const entry = {category: cat, desc, amount, date, recurring, paid, paidVia, items, bankTxnId: null, cashTxnId: null};
   const id = await save('expenses', entry);
   if (paid === 'paid') {
-    const bankTxnId = await createLinkedBankTxn({ amount, desc: 'Expense: ' + (desc||cat), category: cat, date, linkType: 'expense', linkId: id });
-    if (bankTxnId) { await update('expenses', id, { bankTxnId }); entry.bankTxnId = bankTxnId; }
+    if (paidVia === 'cash') {
+      const cashEntry = {type: 'out', desc: 'Expense: ' + (desc||cat), amount, date, notes: cat};
+      const cashTxnId = await save('cashTransactions', cashEntry);
+      if (cashTxnId) { cashData.push({id: cashTxnId, ...cashEntry}); await update('expenses', id, {cashTxnId}); entry.cashTxnId = cashTxnId; }
+    } else {
+      const bankTxnId = await createLinkedBankTxn({ amount, desc: 'Expense: ' + (desc||cat), category: cat, date, linkType: 'expense', linkId: id });
+      if (bankTxnId) { await update('expenses', id, { bankTxnId }); entry.bankTxnId = bankTxnId; }
+    }
   }
   expenseData.push({id, ...entry});
-  renderExpenses(); renderBank(); renderDashboard();
+  renderExpenses(); renderBank(); renderCash(); renderDashboard();
   document.getElementById('e-amount').value = '';
   document.getElementById('e-desc').value = '';
   resetExpItemsForm();
-  toast('Expense added ✓' + (paid==='paid' ? ' (deducted from Bank)' : ''));
+  const sourceLabel = paidVia === 'cash' ? ' (deducted from Cash)' : paidVia === 'bank' ? ' (deducted from Bank)' : '';
+  toast('Expense added ✓' + (paid==='paid' ? sourceLabel : ''));
 };
 window.deleteExpense = async function(id) {
-  if (!confirm('Delete? This will also remove its linked bank withdrawal, if any.')) return;
+  if (!confirm('Delete? This will also remove its linked bank/cash withdrawal, if any.')) return;
   const exp = expenseData.find(x => x.id === id);
   if (exp && exp.bankTxnId) await deleteLinkedBankTxn(exp.bankTxnId);
+  if (exp && exp.cashTxnId) {
+    await remove('cashTransactions', exp.cashTxnId);
+    cashData = cashData.filter(x => x.id !== exp.cashTxnId);
+  }
   await remove('expenses', id);
   expenseData = expenseData.filter(x => x.id !== id);
-  renderExpenses(); renderBank(); renderDashboard();
+  renderExpenses(); renderBank(); renderCash(); renderDashboard();
   toast('Deleted');
 };
 window.togglePaid = async function(id, current) {
@@ -1756,16 +1779,29 @@ window.togglePaid = async function(id, current) {
   const exp = expenseData.find(x => x.id === id);
   if (!exp) return;
   let bankTxnId = exp.bankTxnId || null;
+  let cashTxnId = exp.cashTxnId || null;
+  const paidVia = exp.paidVia || 'bank';
   if (newVal === 'paid') {
-    bankTxnId = await createLinkedBankTxn({ amount: exp.amount, desc: 'Expense: ' + (exp.desc||exp.category), category: exp.category, date: exp.date, linkType: 'expense', linkId: id });
+    if (paidVia === 'cash') {
+      const cashEntry = {type: 'out', desc: 'Expense: ' + (exp.desc||exp.category), amount: exp.amount, date: exp.date, notes: exp.category};
+      cashTxnId = await save('cashTransactions', cashEntry);
+      if (cashTxnId) cashData.push({id: cashTxnId, ...cashEntry});
+    } else {
+      bankTxnId = await createLinkedBankTxn({ amount: exp.amount, desc: 'Expense: ' + (exp.desc||exp.category), category: exp.category, date: exp.date, linkType: 'expense', linkId: id });
+    }
   } else {
-    if (bankTxnId) await deleteLinkedBankTxn(bankTxnId);
-    bankTxnId = null;
+    if (bankTxnId) { await deleteLinkedBankTxn(bankTxnId); bankTxnId = null; }
+    if (cashTxnId) {
+      await remove('cashTransactions', cashTxnId);
+      cashData = cashData.filter(x => x.id !== cashTxnId);
+      cashTxnId = null;
+    }
   }
-  await update('expenses', id, {paid: newVal, bankTxnId});
-  expenseData = expenseData.map(x => x.id===id ? {...x, paid: newVal, bankTxnId} : x);
-  renderExpenses(); renderBank(); renderDashboard();
-  toast(newVal === 'paid' ? 'Marked Paid — deducted from Bank ✓' : 'Marked Unpaid — added back to Bank ✓');
+  await update('expenses', id, {paid: newVal, paidVia, bankTxnId, cashTxnId});
+  expenseData = expenseData.map(x => x.id===id ? {...x, paid: newVal, paidVia, bankTxnId, cashTxnId} : x);
+  renderExpenses(); renderBank(); renderCash(); renderDashboard();
+  const src = paidVia === 'cash' ? 'Cash' : 'Bank';
+  toast(newVal === 'paid' ? `Marked Paid — deducted from ${src} ✓` : `Marked Unpaid — added back to ${src} ✓`);
 };
 window.filterExpPeriod = function(p, el) {
   expFilter = p;
@@ -1781,6 +1817,8 @@ window.duplicateExpense = function(id) {
   document.getElementById('e-date').value = today();
   document.getElementById('e-recurring').value = r.recurring || '';
   document.getElementById('e-paid').value = 'unpaid';
+  if (r.paidVia) document.getElementById('e-payvia').value = r.paidVia;
+  toggleExpPayvia();
   document.getElementById('e-amount').focus();
   document.querySelector('#page-expenses .card').scrollIntoView({behavior:'smooth', block:'start'});
   toast('Loaded into the form above — adjust & click Add');
@@ -1822,6 +1860,7 @@ function renderExpenses() {
         <span class="toggle-paid ${r.paid==='paid'?'paid':'unpaid'}" onclick="togglePaid('${r.id}','${r.paid}')">
           ${r.paid==='paid'?'✅ Paid':'⏳ Unpaid'}
         </span>
+        ${r.paid==='paid' ? `<span style="font-size:0.72rem;color:var(--muted);margin-left:4px;">${r.paidVia==='cash'?'💵 Cash':'🏦 Bank'}</span>` : ''}
       </td>
       <td style="display:flex;gap:4px;">
         <button class="btn btn-ghost btn-xs" onclick="duplicateExpense('${r.id}')" title="Duplicate into the form above">📋</button>
