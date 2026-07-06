@@ -2015,24 +2015,37 @@ window.deleteSavings = async function(id) {
   renderSavings(); renderBank(); renderDashboard();
   toast('Deleted');
 };
-window.updateSaved = async function(id) {
+window.editSavings = function(id) {
+  const form = document.getElementById('sgedit-' + id);
+  if (!form) return;
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+};
+window.saveEditSavings = async function(id) {
   const goal = savingsData.find(x => x.id === id);
   if (!goal) return;
-  const newSaved = parseFloat(prompt('Enter new amount saved (GYD):', goal.saved||0) || 0);
-  if (isNaN(newSaved)) return;
+  const name    = document.getElementById('sge-name-'   + id).value.trim();
+  const target  = parseFloat(document.getElementById('sge-target-' + id).value || 0);
+  const newSaved= parseFloat(document.getElementById('sge-saved-'  + id).value || 0);
+  const monthly = parseFloat(document.getElementById('sge-monthly-'+ id).value || 0);
+  const date    = document.getElementById('sge-date-'   + id).value;
+  const notes   = document.getElementById('sge-notes-'  + id).value.trim();
+  if (!name || !target) { toast('Goal name and target are required', 'error'); return; }
+
+  // Adjust linked bank transaction if saved amount changed
   let bankTxnId = goal.bankTxnId || null;
   if (newSaved <= 0) {
-    if (bankTxnId) await deleteLinkedBankTxn(bankTxnId);
-    bankTxnId = null;
+    if (bankTxnId) { await deleteLinkedBankTxn(bankTxnId); bankTxnId = null; }
   } else if (bankTxnId) {
     await updateLinkedBankTxn(bankTxnId, newSaved);
   } else {
-    bankTxnId = await createLinkedBankTxn({ amount: newSaved, desc: 'Savings: ' + goal.name, category: 'Savings Transfer', date: today(), linkType: 'savings', linkId: id });
+    bankTxnId = await createLinkedBankTxn({ amount: newSaved, desc: 'Savings: ' + name, category: 'Savings Transfer', date: date || today(), linkType: 'savings', linkId: id });
   }
-  await update('savings', id, {saved: newSaved, bankTxnId});
-  savingsData = savingsData.map(x => x.id===id ? {...x, saved: newSaved, bankTxnId} : x);
+
+  const updated = { name, target, saved: newSaved, monthly, targetDate: date, notes, bankTxnId };
+  await update('savings', id, updated);
+  savingsData = savingsData.map(x => x.id === id ? { ...x, ...updated } : x);
   renderSavings(); renderBank(); renderDashboard();
-  toast('Updated ✓ (Bank adjusted to match)');
+  toast('Goal updated ✓');
 };
 function renderSavings() {
   const total = savingsData.reduce((s,x)=>s+(x.saved||0),0);
@@ -2050,14 +2063,14 @@ function renderSavings() {
     const remaining = r.target - (r.saved||0);
     const monthsLeft = r.monthly > 0 ? Math.ceil(remaining/r.monthly) : null;
     return `
-    <div class="savings-goal-card">
+    <div class="savings-goal-card" id="sgc-${r.id}">
       <div class="savings-goal-header">
         <div>
           <div class="savings-goal-name">${r.name}</div>
           ${r.notes ? '<div style="font-size:0.78rem;color:var(--muted);margin-top:2px">'+r.notes+'</div>' : ''}
         </div>
         <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn btn-ghost btn-sm" onclick="updateSaved('${r.id}')">Update</button>
+          <button class="btn btn-ghost btn-sm" onclick="editSavings('${r.id}')">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteSavings('${r.id}')">Delete</button>
         </div>
       </div>
@@ -2073,6 +2086,40 @@ function renderSavings() {
         <div class="progress-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':'var(--accent)'}"></div>
       </div>
       <div style="text-align:right;font-size:0.78rem;color:var(--muted);margin-top:4px">${pct.toFixed(1)}% complete</div>
+      <!-- INLINE EDIT FORM -->
+      <div id="sgedit-${r.id}" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <div style="font-size:0.82rem;font-weight:600;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">Edit Goal</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Goal Name</label>
+            <input type="text" id="sge-name-${r.id}" value="${r.name.replace(/"/g,'&quot;')}"/>
+          </div>
+          <div class="form-group">
+            <label>Target Amount (GYD)</label>
+            <input type="number" id="sge-target-${r.id}" value="${r.target}"/>
+          </div>
+          <div class="form-group">
+            <label>Amount Saved (GYD)</label>
+            <input type="number" id="sge-saved-${r.id}" value="${r.saved||0}"/>
+          </div>
+          <div class="form-group">
+            <label>Monthly Contribution (GYD)</label>
+            <input type="number" id="sge-monthly-${r.id}" value="${r.monthly||0}"/>
+          </div>
+          <div class="form-group">
+            <label>Target Date (optional)</label>
+            <input type="date" id="sge-date-${r.id}" value="${r.targetDate||''}"/>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <input type="text" id="sge-notes-${r.id}" value="${(r.notes||'').replace(/"/g,'&quot;')}"/>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn btn-primary btn-sm" onclick="saveEditSavings('${r.id}')">Save Changes</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sgedit-${r.id}').style.display='none'">Cancel</button>
+        </div>
+      </div>
     </div>`;
   }).join('');
 }
