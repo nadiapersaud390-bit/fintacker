@@ -453,6 +453,15 @@
         </div>
       </div>
 
+      <!-- Bills Due Soon alert -->
+      <div id="dash-bills-due-card" class="card mb24" style="display:none;">
+        <div class="section-header">
+          <div class="section-title">🔔 Bills Due Soon</div>
+          <span style="font-size:0.78rem;color:var(--muted);">Unpaid expenses with upcoming or overdue due dates</span>
+        </div>
+        <div id="dash-bills-due"></div>
+      </div>
+
       <div class="card mb24">
         <div class="section-header">
           <div class="section-title">🔁 Recurring Due</div>
@@ -467,7 +476,7 @@
           <div class="chart-box"><canvas id="chart-cat"></canvas></div>
         </div>
         <div class="card">
-          <div class="section-header"><div class="section-title">Monthly Cash Flow</div></div>
+          <div class="section-header"><div class="section-title">Income vs Expenses (6 months)</div></div>
           <div class="chart-box"><canvas id="chart-flow"></canvas></div>
         </div>
       </div>
@@ -801,6 +810,10 @@
               <option value="cash">💵 Cash in Hand</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Due Date (optional)</label>
+            <input type="date" id="e-duedate"/>
+          </div>
         </div>
         <!-- Optional itemized list -->
         <div style="margin-top:4px;">
@@ -832,7 +845,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Items</th><th>Recurring</th><th>Status</th><th>Action</th></tr></thead>
+            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Items</th><th>Recurring</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="expense-table"></tbody>
           </table>
         </div>
@@ -1789,7 +1802,8 @@ window.addExpense = async function() {
   const paidVia = paid === 'paid' ? document.getElementById('e-payvia').value : '';
   const items = getExpItems();
   if (!amount || !date) { toast('Enter amount and date', 'error'); return; }
-  const entry = {category: cat, desc, amount, date, recurring, paid, paidVia, items, bankTxnId: null, cashTxnId: null};
+  const dueDate = document.getElementById('e-duedate').value;
+  const entry = {category: cat, desc, amount, date, recurring, paid, paidVia, dueDate, items, bankTxnId: null, cashTxnId: null};
   const id = await save('expenses', entry);
   if (paid === 'paid') {
     if (paidVia === 'cash') {
@@ -1805,6 +1819,7 @@ window.addExpense = async function() {
   renderExpenses(); renderBank(); renderCash(); renderDashboard();
   document.getElementById('e-amount').value = '';
   document.getElementById('e-desc').value = '';
+  document.getElementById('e-duedate').value = '';
   resetExpItemsForm();
   const sourceLabel = paidVia === 'cash' ? ' (deducted from Cash)' : paidVia === 'bank' ? ' (deducted from Bank)' : '';
   toast('Expense added ✓' + (paid==='paid' ? sourceLabel : ''));
@@ -1897,6 +1912,17 @@ function renderExpenses() {
            </div>
          </details>`
       : '<span style="color:var(--muted);font-size:0.78rem;">—</span>';
+    const todayStr = today();
+    let dueCellHtml = '—';
+    if (r.dueDate) {
+      if (r.paid === 'unpaid' && r.dueDate < todayStr) {
+        dueCellHtml = `<span style="color:var(--red);font-weight:600;">🔴 ${r.dueDate}<br><span style="font-size:0.7rem;">Overdue</span></span>`;
+      } else if (r.paid === 'unpaid' && r.dueDate <= addDays(todayStr, 7)) {
+        dueCellHtml = `<span style="color:var(--yellow);font-weight:600;">🟡 ${r.dueDate}<br><span style="font-size:0.7rem;">Due soon</span></span>`;
+      } else {
+        dueCellHtml = `<span style="color:var(--muted);">${r.dueDate}</span>`;
+      }
+    }
     return `<tr>
       <td>${r.date}</td>
       <td><span class="badge badge-blue">${r.category}</span></td>
@@ -1904,6 +1930,7 @@ function renderExpenses() {
       <td style="color:var(--red);font-weight:600">${fmt(r.amount)}</td>
       <td style="min-width:120px;">${itemsHtml}</td>
       <td>${r.recurring ? '<span class="badge badge-teal">'+r.recurring+'</span>' : '—'}</td>
+      <td style="min-width:90px;">${dueCellHtml}</td>
       <td>
         <span class="toggle-paid ${r.paid==='paid'?'paid':'unpaid'}" onclick="togglePaid('${r.id}','${r.paid}')">
           ${r.paid==='paid'?'✅ Paid':'⏳ Unpaid'}
@@ -1915,7 +1942,7 @@ function renderExpenses() {
         <button class="btn btn-danger btn-xs" onclick="deleteExpense('${r.id}')">Del</button>
       </td>
     </tr>`;
-  }).join('') || '<tr><td colspan="8" class="empty"><div class="empty-icon">🧾</div><div class="empty-text">No expenses yet</div></td></tr>';
+  }).join('') || '<tr><td colspan="9" class="empty"><div class="empty-icon">🧾</div><div class="empty-text">No expenses yet</div></td></tr>';
 }
 
 // ======= LOANS =======
@@ -2305,9 +2332,56 @@ function resetExpItemsForm() {
 }
 
 // ======= DASHBOARD =======
+function addDays(dateStr, n) {
+  const d = new Date(dateStr); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10);
+}
+function renderBillsDue() {
+  const todayStr = today();
+  const in7Str   = addDays(todayStr, 7);
+  const overdue  = expenseData.filter(x => x.paid === 'unpaid' && x.dueDate && x.dueDate < todayStr)
+                               .sort((a,b) => a.dueDate < b.dueDate ? -1 : 1);
+  const dueSoon  = expenseData.filter(x => x.paid === 'unpaid' && x.dueDate && x.dueDate >= todayStr && x.dueDate <= in7Str)
+                               .sort((a,b) => a.dueDate < b.dueDate ? -1 : 1);
+  const card = document.getElementById('dash-bills-due-card');
+  const el   = document.getElementById('dash-bills-due');
+  if (!overdue.length && !dueSoon.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const rows = [
+    ...overdue.map(r => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);margin-bottom:8px;">
+        <div>
+          <span style="font-weight:600;color:var(--red);">🔴 ${r.desc || r.category}</span>
+          <span class="badge badge-red" style="margin-left:8px;">${r.category}</span>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">Was due: <strong style="color:var(--red);">${r.dueDate}</strong> — ${Math.round((new Date(todayStr)-new Date(r.dueDate))/(1000*60*60*24))} day(s) overdue</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:700;color:var(--red);">${fmt(r.amount)}</div>
+          <span class="toggle-paid unpaid" style="font-size:0.72rem;margin-top:4px;display:inline-block;" onclick="togglePaid('${r.id}','unpaid')">Mark Paid</span>
+        </div>
+      </div>`),
+    ...dueSoon.map(r => {
+      const daysLeft = Math.round((new Date(r.dueDate)-new Date(todayStr))/(1000*60*60*24));
+      return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);margin-bottom:8px;">
+        <div>
+          <span style="font-weight:600;color:var(--yellow);">🟡 ${r.desc || r.category}</span>
+          <span class="badge badge-yellow" style="margin-left:8px;">${r.category}</span>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">Due: <strong style="color:var(--yellow);">${r.dueDate}</strong> — ${daysLeft === 0 ? 'today' : 'in ' + daysLeft + ' day(s)'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:700;color:var(--yellow);">${fmt(r.amount)}</div>
+          <span class="toggle-paid unpaid" style="font-size:0.72rem;margin-top:4px;display:inline-block;" onclick="togglePaid('${r.id}','unpaid')">Mark Paid</span>
+        </div>
+      </div>`;
+    })
+  ];
+  el.innerHTML = rows.join('');
+}
+
 let catChart = null, flowChart = null;
 function renderDashboard() {
   renderRecurringDue();
+  renderBillsDue();
 
   // ---- Bank balance (deposits minus all withdrawals, including linked savings/expense txns) ----
   let bankBal = 0;
@@ -2409,15 +2483,24 @@ function renderDashboard() {
   if (flowChart) flowChart.destroy();
   const ctx2 = document.getElementById('chart-flow').getContext('2d');
   flowChart = new Chart(ctx2, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels: months.map(m=>m.label),
       datasets: [
-        { label: 'Income', data: incByM, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.08)', tension: 0.4, fill: true },
-        { label: 'Expenses', data: expByM, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', tension: 0.4, fill: true }
+        { label: 'Income',   data: incByM, backgroundColor: 'rgba(34,197,94,0.75)',  borderRadius: 5, borderSkipped: false },
+        { label: 'Expenses', data: expByM, backgroundColor: 'rgba(239,68,68,0.75)', borderRadius: 5, borderSkipped: false }
       ]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#7a8099' } } }, scales: { x: { ticks: { color: '#7a8099' }, grid: { color: '#252a3a' } }, y: { ticks: { color: '#7a8099' }, grid: { color: '#252a3a' } } } }
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#7a8099' } } },
+      scales: {
+        x: { ticks: { color: '#7a8099' }, grid: { color: '#252a3a' } },
+        y: { ticks: { color: '#7a8099' }, grid: { color: '#252a3a' },
+             beginAtZero: true,
+             ticks: { color: '#7a8099', callback: v => 'GYD ' + (v>=1000?(v/1000).toFixed(0)+'k':v) } }
+      }
+    }
   });
 
   // Savings goals in dashboard
