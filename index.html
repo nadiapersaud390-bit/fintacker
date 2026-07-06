@@ -453,6 +453,36 @@
         </div>
       </div>
 
+      <!-- Net Worth -->
+      <div class="card mb24" style="background:linear-gradient(135deg,#1a1f35 0%,#0d0f14 100%);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">💎 Net Worth</div>
+            <div style="font-size:2.4rem;font-weight:800;" id="dash-networth">GYD $0</div>
+            <div style="font-size:0.78rem;color:var(--muted);margin-top:4px;" id="dash-networth-sub">Bank + Cash − Loans you owe</div>
+          </div>
+          <div style="display:flex;gap:24px;flex-wrap:wrap;">
+            <div style="text-align:center;">
+              <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px;">Assets</div>
+              <div style="font-size:1.1rem;font-weight:700;color:var(--green);" id="dash-nw-assets">GYD $0</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:0.72rem;color:var(--muted);margin-bottom:4px;">Liabilities</div>
+              <div style="font-size:1.1rem;font-weight:700;color:var(--red);" id="dash-nw-liabilities">GYD $0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Budget Alerts -->
+      <div id="dash-budget-alerts-card" class="card mb24" style="display:none;">
+        <div class="section-header">
+          <div class="section-title">📊 Budget Alerts</div>
+          <span style="font-size:0.78rem;color:var(--muted);">Categories at 80%+ of monthly limit</span>
+        </div>
+        <div id="dash-budget-alerts"></div>
+      </div>
+
       <!-- Bills Due Soon alert -->
       <div id="dash-bills-due-card" class="card mb24" style="display:none;">
         <div class="section-header">
@@ -587,6 +617,9 @@
             <button class="btn btn-ghost btn-sm" onclick="syncBankLinks()" title="Link any already-paid expenses or already-saved goals to the Bank ledger">🔄 Sync</button>
           </div>
         </div>
+        <div style="margin:8px 0 12px;">
+          <input type="text" id="search-bank" placeholder="🔍 Search transactions..." oninput="renderBank()" style="width:100%;max-width:320px;font-size:0.85rem;"/>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Recurring</th><th>Deposit</th><th>Withdrawal</th><th>Balance</th><th>Action</th></tr></thead>
@@ -719,6 +752,9 @@
 
       <div class="card">
         <div class="section-title mb16">Income History</div>
+        <div style="margin-bottom:12px;">
+          <input type="text" id="search-income" placeholder="🔍 Search income..." oninput="renderIncome()" style="width:100%;max-width:320px;font-size:0.85rem;"/>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Date</th><th>Source</th><th>Amount</th><th>Paid via</th><th>Frequency</th><th>Notes</th><th>Action</th></tr></thead>
@@ -833,6 +869,34 @@
         <button class="btn btn-primary" onclick="addExpense()">Add Expense</button>
       </div>
 
+      <!-- Budget Limits -->
+      <div class="card mb24">
+        <div class="section-header">
+          <div class="section-title">📊 Monthly Budget Limits</div>
+          <button class="btn btn-ghost btn-sm" onclick="toggleBudgetSetup()">⚙ Set Budgets</button>
+        </div>
+        <div id="budget-setup" style="display:none;margin-bottom:16px;padding:14px;background:var(--surface);border-radius:10px;border:1px solid var(--border);">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+            <div class="form-group" style="flex:2;min-width:140px;">
+              <label>Category</label>
+              <select id="budget-cat">
+                <option>Food</option><option>Groceries</option><option>Rent</option>
+                <option>Car Installment</option><option>Car Insurance</option>
+                <option>Internet</option><option>Pets</option><option>Mother</option>
+                <option>Medical</option><option>Utilities</option><option>Clothing</option>
+                <option>Entertainment</option><option>Travel</option><option>Other</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:2;min-width:140px;">
+              <label>Monthly Limit (GYD)</label>
+              <input type="number" id="budget-limit" placeholder="e.g. 20000"/>
+            </div>
+            <button class="btn btn-primary btn-sm" style="margin-bottom:1px;" onclick="saveBudget()">Save Limit</button>
+          </div>
+        </div>
+        <div id="budget-list"><div style="color:var(--muted);font-size:0.85rem;">No budget limits set. Click "⚙ Set Budgets" to add one.</div></div>
+      </div>
+
       <div class="card">
         <div class="section-header">
           <div class="section-title">Expense Records</div>
@@ -842,6 +906,9 @@
             <button class="period-tab" onclick="filterExpPeriod('3month',this)">3 Months</button>
             <button class="period-tab" onclick="filterExpPeriod('year',this)">This Year</button>
           </div>
+        </div>
+        <div style="margin:8px 0 12px;">
+          <input type="text" id="search-expense" placeholder="🔍 Search expenses..." oninput="renderExpenses()" style="width:100%;max-width:320px;font-size:0.85rem;"/>
         </div>
         <div class="table-wrap">
           <table>
@@ -1254,6 +1321,7 @@ const today = () => new Date().toISOString().slice(0,10);
 
 // State
 let bankData = [], incomeData = [], expenseData = [], loanData = [], savingsData = [], bizData = [], salesData = [], cashData = [];
+let goalContributionsData = [], budgetData = [];
 let bankFilter = 'all', expFilter = 'all', bizFilter = 'all', salesFilter = 'all';
 let db, fs, auth, authFns, currentUser = null;
 let momMoney = 0;
@@ -1267,6 +1335,7 @@ function userPath(col) {
 function clearAllData() {
   bankData = []; incomeData = []; expenseData = []; loanData = [];
   savingsData = []; bizData = []; salesData = []; cashData = [];
+  goalContributionsData = []; budgetData = [];
 }
 
 function showLogin() {
@@ -1355,10 +1424,11 @@ async function loadAll() {
     loadCol('loans'), loadCol('savings'), loadCol('business'), loadCol('sales'),
     loadCol('cashTransactions'), loadCol('momTransactions')
   ]);
+  [goalContributionsData, budgetData] = await Promise.all([loadCol('goalContributions'), loadCol('budgets')]);
   momMoney = momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)
            - momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
   renderBank(); renderCash(); renderIncome(); renderExpenses(); renderLoans(); renderSavings(); renderBusiness();
-  renderSales(); renderMom();
+  renderSales(); renderMom(); renderBudgets();
   renderDashboard();
 }
 
@@ -1654,7 +1724,8 @@ window.filterBankPeriod = function(p, el) {
 
 function renderBank() {
   const sorted = [...bankData].sort((a,b) => a.date < b.date ? 1 : -1);
-  const filtered = sorted.filter(x => inPeriod(x.date, bankFilter));
+  const bSearch = (document.getElementById('search-bank')?.value || '').toLowerCase();
+  const filtered = sorted.filter(x => inPeriod(x.date, bankFilter) && (!bSearch || (x.desc||'').toLowerCase().includes(bSearch) || (x.category||'').toLowerCase().includes(bSearch) || String(x.amount).includes(bSearch)));
   let running = 0;
   const withBal = [...sorted].reverse().map(r => {
     running += r.type === 'deposit' ? r.amount : -r.amount;
@@ -1678,12 +1749,12 @@ function renderBank() {
       <td style="color:var(--red)">${r.type==='withdrawal'?fmt(r.amount):''}</td>
       <td style="font-weight:600;color:${(balMap[r.id]||0)>=0?'var(--green)':'var(--red)'}">${fmt(balMap[r.id])}</td>
       <td style="display:flex;gap:4px;">
-        <button class="btn btn-ghost btn-xs" onclick="duplicateBank('${r.id}')" title="Duplicate into the form above">📋</button>
+        <button class="btn btn-ghost btn-xs" onclick="duplicateBank('${r.id}')" title="Duplicate">📋</button>
         ${r.auto
-          ? '<span style="color:var(--muted);font-size:0.72rem;" title="Undo this from the Expense or Savings page instead">linked</span>'
-          : '<button class="btn btn-danger btn-xs" onclick="deleteBank(\''+r.id+'\')">Del</button>'}
+          ? '<span style="color:var(--muted);font-size:0.72rem;">linked</span>'
+          : '<button class="btn btn-ghost btn-xs" onclick="toggleEdit(\'bank\',\''+r.id+'\')">✏️</button><button class="btn btn-danger btn-xs" onclick="deleteBank(\''+r.id+'\')">Del</button>'}
       </td>
-    </tr>`).join('');
+    </tr>` + bankEditRow(r)).join('');
   document.getElementById('bank-table').innerHTML = rows || '<tr><td colspan="8" class="empty"><div class="empty-icon">🏦</div><div class="empty-text">No transactions yet</div></td></tr>';
 }
 
@@ -1767,7 +1838,9 @@ function renderIncome() {
   document.getElementById('inc-year').textContent = fmt(thisYear);
   document.getElementById('inc-sources').textContent = [...new Set(incomeData.map(x=>x.source))].length;
   const sorted = [...incomeData].sort((a,b) => a.date<b.date?1:-1);
-  document.getElementById('income-table').innerHTML = sorted.map(r => {
+  const iSearch = (document.getElementById('search-income')?.value || '').toLowerCase();
+  const iFiltered = sorted.filter(r => !iSearch || (r.source||'').toLowerCase().includes(iSearch) || String(r.amount).includes(iSearch) || (r.notes||'').toLowerCase().includes(iSearch));
+  document.getElementById('income-table').innerHTML = iFiltered.map(r => {
     const viaLabel = r.payvia === 'cash'
       ? '💵 Cash' + (r.depositToBank > 0 ? ` (+${fmt(r.depositToBank)} to bank)` : '')
       : '🏦 Bank';
@@ -1780,10 +1853,11 @@ function renderIncome() {
       <td><span class="badge badge-blue">${r.frequency}</span></td>
       <td style="color:var(--muted)">${r.notes||'—'}</td>
       <td style="display:flex;gap:4px;">
-        <button class="btn btn-ghost btn-xs" onclick="duplicateIncome('${r.id}')" title="Duplicate into the form above">📋</button>
+        <button class="btn btn-ghost btn-xs" onclick="duplicateIncome('${r.id}')" title="Duplicate">📋</button>
+        <button class="btn btn-ghost btn-xs" onclick="toggleEdit('inc','${r.id}')">✏️</button>
         <button class="btn btn-danger btn-xs" onclick="deleteIncome('${r.id}')">Del</button>
       </td>
-    </tr>`;
+    </tr>` + incomeEditRow(r);
   }).join('') || '<tr><td colspan="7" class="empty"><div class="empty-icon">💰</div><div class="empty-text">No income logged yet</div></td></tr>';
 }
 
@@ -1892,7 +1966,8 @@ function renderExpenses() {
   document.getElementById('exp-unpaid').textContent = fmt(monthExp.filter(x=>x.paid==='unpaid').reduce((s,x)=>s+x.amount,0));
   document.getElementById('exp-paid').textContent = fmt(monthExp.filter(x=>x.paid==='paid').reduce((s,x)=>s+x.amount,0));
   document.getElementById('exp-year').textContent = fmt(expenseData.filter(x=>inPeriod(x.date,'year')).reduce((s,x)=>s+x.amount,0));
-  const filtered = [...expenseData].filter(x => inPeriod(x.date, expFilter)).sort((a,b)=>a.date<b.date?1:-1);
+  const eSearch = (document.getElementById('search-expense')?.value || '').toLowerCase();
+  const filtered = [...expenseData].filter(x => inPeriod(x.date, expFilter) && (!eSearch || (x.desc||'').toLowerCase().includes(eSearch) || (x.category||'').toLowerCase().includes(eSearch) || String(x.amount).includes(eSearch))).sort((a,b)=>a.date<b.date?1:-1);
   document.getElementById('expense-table').innerHTML = filtered.map(r => {
     const items = r.items || [];
     const itemsHtml = items.length
@@ -1938,11 +2013,13 @@ function renderExpenses() {
         ${r.paid==='paid' ? `<span style="font-size:0.72rem;color:var(--muted);margin-left:4px;">${r.paidVia==='cash'?'💵 Cash':'🏦 Bank'}</span>` : ''}
       </td>
       <td style="display:flex;gap:4px;">
-        <button class="btn btn-ghost btn-xs" onclick="duplicateExpense('${r.id}')" title="Duplicate into the form above">📋</button>
+        <button class="btn btn-ghost btn-xs" onclick="duplicateExpense('${r.id}')" title="Duplicate">📋</button>
+        <button class="btn btn-ghost btn-xs" onclick="toggleEdit('exp','${r.id}')">✏️</button>
         <button class="btn btn-danger btn-xs" onclick="deleteExpense('${r.id}')">Del</button>
       </td>
-    </tr>`;
+    </tr>` + expenseEditRow(r);
   }).join('') || '<tr><td colspan="9" class="empty"><div class="empty-icon">🧾</div><div class="empty-text">No expenses yet</div></td></tr>';
+  renderBudgets();
 }
 
 // ======= LOANS =======
@@ -2096,7 +2173,8 @@ function renderSavings() {
           <div class="savings-goal-name">${r.name}</div>
           ${r.notes ? '<div style="font-size:0.78rem;color:var(--muted);margin-top:2px">'+r.notes+'</div>' : ''}
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-success btn-sm" onclick="toggleContributions('${r.id}')">+ Contribute</button>
           <button class="btn btn-ghost btn-sm" onclick="editSavings('${r.id}')">Edit</button>
           <button class="btn btn-danger btn-sm" onclick="deleteSavings('${r.id}')">Delete</button>
         </div>
@@ -2146,6 +2224,17 @@ function renderSavings() {
           <button class="btn btn-primary btn-sm" onclick="saveEditSavings('${r.id}')">Save Changes</button>
           <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sgedit-${r.id}').style.display='none'">Cancel</button>
         </div>
+      </div>
+      <!-- CONTRIBUTION PANEL -->
+      <div id="sgcontrib-${r.id}" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <div style="font-size:0.82rem;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">💰 Log Contribution</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end;">
+          <div class="form-group" style="flex:1;min-width:110px;"><label>Amount (GYD)</label><input type="number" id="sgca-${r.id}" placeholder="0.00"/></div>
+          <div class="form-group" style="flex:1;min-width:120px;"><label>Date</label><input type="date" id="sgcd-${r.id}" value="${today()}"/></div>
+          <div class="form-group" style="flex:2;min-width:150px;"><label>Notes (optional)</label><input type="text" id="sgcn-${r.id}" placeholder="e.g. Monthly top-up"/></div>
+          <button class="btn btn-success btn-sm" style="margin-bottom:1px;" onclick="addContribution('${r.id}')">Add</button>
+        </div>
+        <div id="sgch-${r.id}">${renderContribHistory(r.id)}</div>
       </div>
     </div>`;
   }).join('');
@@ -2378,6 +2467,261 @@ function renderBillsDue() {
   el.innerHTML = rows.join('');
 }
 
+// ======= INLINE EDIT HELPERS =======
+window.toggleEdit = function(type, id) {
+  const el = document.getElementById('edit-'+type+'-'+id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
+};
+function bankEditRow(r) {
+  if (r.auto) return '';
+  const cats = ['Salary/Pay','Car Installment','Insurance','Rent','Groceries','Food','Internet','Pets','Mother','Savings Transfer','Business','Loan Payment','Transfer','Other'];
+  return `<tr id="edit-bank-${r.id}" style="display:none;"><td colspan="8" style="padding:14px;background:var(--surface);border-bottom:1px solid var(--border);">
+    <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:10px;">
+      <div class="form-group"><label>Type</label><select id="ebank-type-${r.id}">
+        <option value="deposit"${r.type==='deposit'?' selected':''}>💚 Deposit</option>
+        <option value="withdrawal"${r.type==='withdrawal'?' selected':''}>🔴 Withdrawal</option>
+      </select></div>
+      <div class="form-group"><label>Amount (GYD)</label><input type="number" id="ebank-amount-${r.id}" value="${r.amount}"/></div>
+      <div class="form-group"><label>Description</label><input type="text" id="ebank-desc-${r.id}" value="${(r.desc||'').replace(/"/g,'&quot;')}"/></div>
+      <div class="form-group"><label>Category</label><select id="ebank-cat-${r.id}">${cats.map(c=>`<option${r.category===c?' selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Date</label><input type="date" id="ebank-date-${r.id}" value="${r.date}"/></div>
+      <div class="form-group"><label>Recurring</label><select id="ebank-recur-${r.id}">
+        <option value=""${!r.recurring?' selected':''}>One-time</option>
+        ${['weekly','fortnightly','monthly','3months','yearly'].map(v=>`<option value="${v}"${r.recurring===v?' selected':''}>${v}</option>`).join('')}
+      </select></div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-primary btn-sm" onclick="saveEditBank('${r.id}')">Save Changes</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleEdit('bank','${r.id}')">Cancel</button>
+    </div>
+  </td></tr>`;
+}
+window.saveEditBank = async function(id) {
+  const type = document.getElementById('ebank-type-'+id).value;
+  const amount = parseFloat(document.getElementById('ebank-amount-'+id).value);
+  const desc = document.getElementById('ebank-desc-'+id).value.trim();
+  const category = document.getElementById('ebank-cat-'+id).value;
+  const date = document.getElementById('ebank-date-'+id).value;
+  const recurring = document.getElementById('ebank-recur-'+id).value;
+  if (!amount || !date) { toast('Amount and date required', 'error'); return; }
+  await update('bankTransactions', id, {type, amount, desc, category, date, recurring});
+  bankData = bankData.map(x => x.id===id ? {...x, type, amount, desc, category, date, recurring} : x);
+  renderBank(); renderDashboard();
+  toast('Transaction updated ✓');
+};
+function incomeEditRow(r) {
+  const freqs = ['weekly','fortnightly','monthly','3months','yearly','once'];
+  return `<tr id="edit-inc-${r.id}" style="display:none;"><td colspan="7" style="padding:14px;background:var(--surface);border-bottom:1px solid var(--border);">
+    <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:10px;">
+      <div class="form-group"><label>Source</label><input type="text" id="einc-source-${r.id}" value="${(r.source||'').replace(/"/g,'&quot;')}"/></div>
+      <div class="form-group"><label>Amount (GYD)</label><input type="number" id="einc-amount-${r.id}" value="${r.amount}"/></div>
+      <div class="form-group"><label>Date</label><input type="date" id="einc-date-${r.id}" value="${r.date}"/></div>
+      <div class="form-group"><label>Frequency</label><select id="einc-freq-${r.id}">
+        ${freqs.map(v=>`<option value="${v}"${r.frequency===v?' selected':''}>${v}</option>`).join('')}
+      </select></div>
+      <div class="form-group"><label>Notes</label><input type="text" id="einc-notes-${r.id}" value="${(r.notes||'').replace(/"/g,'&quot;')}"/></div>
+    </div>
+    <div style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;padding:6px 8px;background:rgba(245,158,11,0.08);border-radius:6px;border-left:3px solid var(--yellow);">
+      ⚠️ Editing amount here updates the income record only. If this income was deposited to Bank or Cash, edit that transaction separately on the Bank page.
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-primary btn-sm" onclick="saveEditIncome('${r.id}')">Save Changes</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleEdit('inc','${r.id}')">Cancel</button>
+    </div>
+  </td></tr>`;
+}
+window.saveEditIncome = async function(id) {
+  const source = document.getElementById('einc-source-'+id).value.trim();
+  const amount = parseFloat(document.getElementById('einc-amount-'+id).value);
+  const date = document.getElementById('einc-date-'+id).value;
+  const frequency = document.getElementById('einc-freq-'+id).value;
+  const notes = document.getElementById('einc-notes-'+id).value.trim();
+  if (!source || !amount || !date) { toast('Fill source, amount and date', 'error'); return; }
+  await update('income', id, {source, amount, frequency, date, notes});
+  incomeData = incomeData.map(x => x.id===id ? {...x, source, amount, frequency, date, notes} : x);
+  renderIncome(); renderDashboard();
+  toast('Income updated ✓');
+};
+function expenseEditRow(r) {
+  const cats = ['Food','Groceries','Rent','Car Installment','Car Insurance','Internet','Pets','Mother','Medical','Utilities','Clothing','Entertainment','Travel','Other'];
+  const recurs = ['','weekly','fortnightly','monthly','3months','yearly'];
+  return `<tr id="edit-exp-${r.id}" style="display:none;"><td colspan="9" style="padding:14px;background:var(--surface);border-bottom:1px solid var(--border);">
+    <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:10px;">
+      <div class="form-group"><label>Category</label><select id="eexp-cat-${r.id}">${cats.map(c=>`<option${r.category===c?' selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Description</label><input type="text" id="eexp-desc-${r.id}" value="${(r.desc||'').replace(/"/g,'&quot;')}"/></div>
+      <div class="form-group"><label>Amount (GYD)</label><input type="number" id="eexp-amount-${r.id}" value="${r.amount}"/></div>
+      <div class="form-group"><label>Date</label><input type="date" id="eexp-date-${r.id}" value="${r.date}"/></div>
+      <div class="form-group"><label>Due Date</label><input type="date" id="eexp-due-${r.id}" value="${r.dueDate||''}"/></div>
+      <div class="form-group"><label>Recurring</label><select id="eexp-recurring-${r.id}">
+        ${recurs.map(v=>`<option value="${v}"${(r.recurring||'')=== v?' selected':''}>${v||'One-time'}</option>`).join('')}
+      </select></div>
+      <div class="form-group"><label>Notes</label><input type="text" id="eexp-notes-${r.id}" value="${(r.desc||'').replace(/"/g,'&quot;')}"/></div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-primary btn-sm" onclick="saveEditExpense('${r.id}')">Save Changes</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleEdit('exp','${r.id}')">Cancel</button>
+    </div>
+  </td></tr>`;
+}
+window.saveEditExpense = async function(id) {
+  const exp = expenseData.find(x => x.id === id); if (!exp) return;
+  const category = document.getElementById('eexp-cat-'+id).value;
+  const desc = document.getElementById('eexp-desc-'+id).value.trim();
+  const amount = parseFloat(document.getElementById('eexp-amount-'+id).value);
+  const date = document.getElementById('eexp-date-'+id).value;
+  const dueDate = document.getElementById('eexp-due-'+id).value;
+  const recurring = document.getElementById('eexp-recurring-'+id).value;
+  if (!amount || !date) { toast('Amount and date required', 'error'); return; }
+  if (exp.paid === 'paid' && amount !== exp.amount) {
+    if (exp.bankTxnId) await updateLinkedBankTxn(exp.bankTxnId, amount);
+    if (exp.cashTxnId) {
+      await update('cashTransactions', exp.cashTxnId, {amount});
+      cashData = cashData.map(x => x.id===exp.cashTxnId ? {...x, amount} : x);
+    }
+  }
+  const updated = {category, desc, amount, date, dueDate, recurring};
+  await update('expenses', id, updated);
+  expenseData = expenseData.map(x => x.id===id ? {...x, ...updated} : x);
+  renderExpenses(); renderBank(); renderCash(); renderDashboard();
+  toast('Expense updated ✓');
+};
+
+// ======= GOAL CONTRIBUTIONS =======
+function renderContribHistory(goalId) {
+  const contribs = goalContributionsData.filter(x => x.goalId === goalId).sort((a,b) => a.date < b.date ? 1 : -1);
+  if (!contribs.length) return '<div style="color:var(--muted);font-size:0.82rem;padding:8px 0;">No contributions logged yet.</div>';
+  const total = contribs.reduce((s,c)=>s+(c.amount||0),0);
+  return '<div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">'+contribs.length+' contribution'+(contribs.length!==1?'s':'')+' · Total: <strong style="color:var(--accent2);">'+fmt(total)+'</strong></div>'
+    + contribs.map(c => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(37,42,58,0.4);">
+      <div>
+        <span style="font-weight:600;color:var(--accent2);">${fmt(c.amount)}</span>
+        <span style="color:var(--muted);font-size:0.78rem;margin-left:8px;">${c.date}</span>
+        ${c.notes ? '<span style="color:var(--muted);font-size:0.78rem;margin-left:6px;">— '+c.notes+'</span>' : ''}
+      </div>
+      <button class="btn btn-danger btn-xs" onclick="deleteContribution('${c.id}','${goalId}',${c.amount})">✕</button>
+    </div>`).join('');
+}
+window.toggleContributions = function(id) {
+  const el = document.getElementById('sgcontrib-'+id);
+  if (el) el.style.display = el.style.display==='none' ? 'block' : 'none';
+};
+window.addContribution = async function(goalId) {
+  const amount = parseFloat(document.getElementById('sgca-'+goalId).value);
+  const date = document.getElementById('sgcd-'+goalId).value;
+  const notes = document.getElementById('sgcn-'+goalId).value.trim();
+  if (!amount || amount <= 0) { toast('Enter a valid amount', 'error'); return; }
+  if (!date) { toast('Enter a date', 'error'); return; }
+  const goal = savingsData.find(x => x.id === goalId); if (!goal) return;
+  const id = await save('goalContributions', {goalId, amount, date, notes});
+  if (!id) return;
+  goalContributionsData.push({id, goalId, amount, date, notes});
+  const newSaved = (goal.saved || 0) + amount;
+  await update('savings', goalId, {saved: newSaved});
+  savingsData = savingsData.map(x => x.id===goalId ? {...x, saved: newSaved} : x);
+  const goal2 = savingsData.find(x => x.id===goalId);
+  if (goal2.bankTxnId) {
+    await updateLinkedBankTxn(goal2.bankTxnId, newSaved);
+  } else {
+    const bId = await createLinkedBankTxn({amount: newSaved, desc: 'Savings: '+goal2.name, category: 'Savings Transfer', date, linkType: 'savings', linkId: goalId});
+    if (bId) { await update('savings', goalId, {bankTxnId: bId}); savingsData = savingsData.map(x => x.id===goalId ? {...x, bankTxnId: bId} : x); }
+  }
+  document.getElementById('sgca-'+goalId).value = '';
+  document.getElementById('sgcn-'+goalId).value = '';
+  renderSavings(); renderBank(); renderDashboard();
+  toast('Contribution logged ✓');
+};
+window.deleteContribution = async function(contribId, goalId, amount) {
+  if (!confirm('Remove this contribution?')) return;
+  const goal = savingsData.find(x => x.id === goalId); if (!goal) return;
+  await remove('goalContributions', contribId);
+  goalContributionsData = goalContributionsData.filter(x => x.id !== contribId);
+  const newSaved = Math.max(0, (goal.saved||0) - amount);
+  await update('savings', goalId, {saved: newSaved});
+  savingsData = savingsData.map(x => x.id===goalId ? {...x, saved: newSaved} : x);
+  const goal2 = savingsData.find(x => x.id===goalId);
+  if (goal2 && goal2.bankTxnId) {
+    if (newSaved <= 0) { await deleteLinkedBankTxn(goal2.bankTxnId); await update('savings', goalId, {bankTxnId:null}); savingsData = savingsData.map(x => x.id===goalId ? {...x, bankTxnId:null} : x); }
+    else await updateLinkedBankTxn(goal2.bankTxnId, newSaved);
+  }
+  renderSavings(); renderBank(); renderDashboard();
+  toast('Contribution removed');
+};
+
+// ======= BUDGET LIMITS =======
+window.toggleBudgetSetup = function() {
+  const el = document.getElementById('budget-setup');
+  if (el) el.style.display = el.style.display==='none' ? 'block' : 'none';
+};
+window.saveBudget = async function() {
+  const category = document.getElementById('budget-cat').value;
+  const limit = parseFloat(document.getElementById('budget-limit').value);
+  if (!limit || limit <= 0) { toast('Enter a valid limit', 'error'); return; }
+  const existing = budgetData.find(x => x.category === category);
+  if (existing) {
+    await update('budgets', existing.id, {limit});
+    budgetData = budgetData.map(x => x.id===existing.id ? {...x, limit} : x);
+    toast('Budget updated ✓');
+  } else {
+    const id = await save('budgets', {category, limit});
+    if (id) budgetData.push({id, category, limit});
+    toast('Budget limit set ✓');
+  }
+  document.getElementById('budget-limit').value = '';
+  renderBudgets(); renderDashboard();
+};
+window.deleteBudget = async function(id) {
+  await remove('budgets', id);
+  budgetData = budgetData.filter(x => x.id !== id);
+  renderBudgets(); renderDashboard();
+  toast('Budget removed');
+};
+function renderBudgets() {
+  const el = document.getElementById('budget-list'); if (!el) return;
+  if (!budgetData.length) { el.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;">No budget limits set. Click "⚙ Set Budgets" to add one.</div>'; return; }
+  const now = new Date(); const m = now.getMonth(); const y = now.getFullYear();
+  el.innerHTML = budgetData.map(b => {
+    const spent = expenseData.filter(x => x.category===b.category && x.paid==='paid' && new Date(x.date).getMonth()===m && new Date(x.date).getFullYear()===y).reduce((s,x)=>s+x.amount,0);
+    const pct = Math.min(100, (spent/b.limit)*100);
+    const color = pct>=100 ? 'var(--red)' : pct>=80 ? 'var(--yellow)' : 'var(--green)';
+    return `<div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div><span style="font-weight:600;">${b.category}</span>
+          <span style="color:${color};font-size:0.8rem;margin-left:8px;">${fmt(spent)} / ${fmt(b.limit)}</span>
+          ${pct>=100?'<span class="badge badge-red" style="margin-left:6px;">Over budget!</span>':pct>=80?'<span class="badge badge-yellow" style="margin-left:6px;">Near limit</span>':''}
+        </div>
+        <button class="btn btn-danger btn-xs" onclick="deleteBudget('${b.id}')">✕</button>
+      </div>
+      <div class="progress-bar"><div style="height:100%;border-radius:99px;width:${pct}%;background:${color};transition:width 0.4s;"></div></div>
+      <div style="text-align:right;font-size:0.72rem;color:var(--muted);margin-top:3px;">${pct.toFixed(0)}% of monthly limit used</div>
+    </div>`;
+  }).join('');
+}
+function renderBudgetAlerts() {
+  const card = document.getElementById('dash-budget-alerts-card');
+  const el = document.getElementById('dash-budget-alerts');
+  if (!el || !budgetData.length) { if(card) card.style.display='none'; return; }
+  const now = new Date(); const m = now.getMonth(); const y = now.getFullYear();
+  const alerts = budgetData.map(b => {
+    const spent = expenseData.filter(x => x.category===b.category && x.paid==='paid' && new Date(x.date).getMonth()===m && new Date(x.date).getFullYear()===y).reduce((s,x)=>s+x.amount,0);
+    const pct = (spent/b.limit)*100;
+    return pct>=80 ? {category:b.category, spent, limit:b.limit, pct} : null;
+  }).filter(Boolean).sort((a,b)=>b.pct-a.pct);
+  if (!alerts.length) { card.style.display='none'; return; }
+  card.style.display='';
+  el.innerHTML = alerts.map(a => `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:10px 14px;border-radius:8px;background:${a.pct>=100?'rgba(239,68,68,0.08)':'rgba(245,158,11,0.08)'};border:1px solid ${a.pct>=100?'rgba(239,68,68,0.2)':'rgba(245,158,11,0.2)'};margin-bottom:8px;">
+      <div>
+        <span style="font-weight:600;color:${a.pct>=100?'var(--red)':'var(--yellow)'};">${a.pct>=100?'🔴':'🟡'} ${a.category}</span>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">${fmt(a.spent)} of ${fmt(a.limit)} — ${a.pct.toFixed(0)}% used this month</div>
+      </div>
+      <div class="progress-bar" style="width:80px;flex-shrink:0;">
+        <div style="height:100%;border-radius:99px;width:${Math.min(100,a.pct)}%;background:${a.pct>=100?'var(--red)':'var(--yellow)'};"></div>
+      </div>
+    </div>`).join('');
+}
+
 let catChart = null, flowChart = null;
 function renderDashboard() {
   renderRecurringDue();
@@ -2444,6 +2788,21 @@ function renderDashboard() {
   // Active loans
   const activeLoans = loanData.filter(x=>(x.amount-(x.paidBack||0))>0).length;
   document.getElementById('dash-loans').textContent = activeLoans;
+
+  // Net Worth
+  const loansIOwe = loanData.filter(x=>x.direction==='owe').reduce((s,x)=>s+Math.max(0,x.amount-(x.paidBack||0)),0);
+  const nwAssets = bankBal + cashBal;
+  const nwLiabilities = loansIOwe;
+  const netWorth = nwAssets - nwLiabilities;
+  const nwEl = document.getElementById('dash-networth');
+  if (nwEl) {
+    nwEl.textContent = fmt(netWorth);
+    nwEl.style.color = netWorth >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('dash-nw-assets').textContent = fmt(nwAssets);
+    document.getElementById('dash-nw-liabilities').textContent = fmt(nwLiabilities);
+    document.getElementById('dash-networth-sub').textContent = fmt(bankBal) + ' bank + ' + fmt(cashBal) + ' cash − ' + fmt(loansIOwe) + ' loans owed';
+  }
+  renderBudgetAlerts();
 
   // Recent transactions
   const recent = [...expenseData, ...incomeData]
