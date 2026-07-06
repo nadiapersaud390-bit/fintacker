@@ -216,13 +216,48 @@
   #toast.error { border-left: 4px solid var(--red); color: var(--red); }
   @keyframes slide-in { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+  /* Bottom nav — mobile only */
+  #bottom-nav { display: none; }
+
   /* Responsive */
   @media(max-width: 768px) {
-    .sidebar { width: 60px; }
-    .sidebar-logo, .nav-item span { display: none; }
-    .nav-item { justify-content: center; padding: 14px; }
-    .main { margin-left: 60px; padding: 16px; }
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 16px 12px 84px; }
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    #toast { bottom: 76px; right: 12px; left: 12px; max-width: none; }
+
+    #bottom-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 200;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    #bottom-nav::-webkit-scrollbar { display: none; }
+    #bottom-nav .nav-item {
+      flex: 0 0 auto;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 8px 12px 10px;
+      border-left: none;
+      border-top: 3px solid transparent;
+      min-width: 62px;
+      text-align: center;
+    }
+    #bottom-nav .nav-item span:last-child { font-size: 0.6rem; display: block; }
+    #bottom-nav .nav-item.active {
+      background: rgba(108,99,255,0.08);
+      color: var(--accent);
+      border-left-color: transparent;
+      border-top-color: var(--accent);
+    }
+    #bottom-nav .nav-icon { font-size: 1.25rem; width: auto; }
   }
 
   /* Divider */
@@ -303,6 +338,19 @@
       <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="doLogout()">🚪 Log Out</button>
     </div>
   </nav>
+
+  <!-- BOTTOM NAV (mobile only) -->
+  <div id="bottom-nav">
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+    <div class="nav-item" data-page="bank"><span class="nav-icon">🏦</span><span>Bank</span></div>
+    <div class="nav-item" data-page="cash"><span class="nav-icon">💵</span><span>Cash</span></div>
+    <div class="nav-item" data-page="income"><span class="nav-icon">💰</span><span>Income</span></div>
+    <div class="nav-item" data-page="expenses"><span class="nav-icon">🧾</span><span>Expenses</span></div>
+    <div class="nav-item" data-page="loans"><span class="nav-icon">🤝</span><span>Loans</span></div>
+    <div class="nav-item" data-page="savings"><span class="nav-icon">🎯</span><span>Savings</span></div>
+    <div class="nav-item" data-page="bizsales"><span class="nav-icon">📈</span><span>Business</span></div>
+    <div class="nav-item" data-page="mom"><span class="nav-icon">👩</span><span>Mom</span></div>
+  </div>
 
   <!-- MAIN -->
   <main class="main">
