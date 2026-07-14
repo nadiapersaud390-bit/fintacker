@@ -994,8 +994,19 @@
             <input type="date" id="l-date"/>
           </div>
           <div class="form-group">
-            <label>Due Date (optional)</label>
+            <label>First Payment Due Date</label>
             <input type="date" id="l-due"/>
+          </div>
+          <div class="form-group">
+            <label>Automatic Monthly Payment (GYD)</label>
+            <input type="number" id="l-installment" placeholder="Amount to deduct each month"/>
+          </div>
+          <div class="form-group">
+            <label>Automatic Bank Payment</label>
+            <select id="l-auto-pay">
+              <option value="yes">Yes — deduct on every due date</option>
+              <option value="no">No — update manually</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Notes</label>
@@ -1456,6 +1467,7 @@ async function loadAll() {
   momMoney = momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)
            - momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
   await processAutomaticRecurringExpenses();
+  await processAutomaticLoanPayments();
   renderBank(); renderCash(); renderIncome(); renderExpenses(); renderLoans(); renderSavings(); renderBusiness();
   renderSales(); renderMom(); renderBudgets();
   renderDashboard();
@@ -2135,6 +2147,70 @@ function renderExpenses() {
   paginateTable('expense-table','expenses');
 }
 
+
+// Automatically pay loans you owe from the bank on each monthly due date.
+// Each successful payment advances the due date by one month and continues until the balance is cleared.
+async function processAutomaticLoanPayments() {
+  const todayStr = today();
+  let changed = false;
+
+  for (const loan of loanData) {
+    if (loan.direction !== 'owe' || !loan.autoPay || !loan.dueDate) continue;
+
+    let remaining = Math.max(0, Number(loan.amount || 0) - Number(loan.paidBack || 0));
+    let nextDue = loan.dueDate;
+    const installment = Math.max(0, Number(loan.installment || 0));
+    if (remaining <= 0 || installment <= 0) continue;
+
+    // Catch up every due date that has arrived, including missed months.
+    while (remaining > 0 && nextDue <= todayStr) {
+      const payment = Math.min(installment, remaining);
+      const uniqueKey = `loan-${loan.id}-${nextDue}`;
+      const alreadyPosted = bankData.some(x => x.autoLoanKey === uniqueKey);
+
+      if (!alreadyPosted) {
+        const bankEntry = {
+          type: 'withdrawal',
+          amount: payment,
+          desc: `Automatic loan payment — ${loan.person}`,
+          category: 'Loan Payment',
+          date: nextDue,
+          auto: true,
+          autoLoanKey: uniqueKey,
+          loanId: loan.id
+        };
+        const bankId = await save('bankTransactions', bankEntry);
+        if (!bankId) break;
+        bankData.push({id: bankId, ...bankEntry});
+
+        loan.paidBack = Number(loan.paidBack || 0) + payment;
+        remaining = Math.max(0, Number(loan.amount || 0) - loan.paidBack);
+        changed = true;
+      }
+
+      nextDue = addMonthsSafe(nextDue, 1);
+      loan.dueDate = remaining > 0 ? nextDue : '';
+      loan.autoPay = remaining > 0;
+      await update('loans', loan.id, {
+        paidBack: Number(loan.paidBack || 0),
+        dueDate: loan.dueDate,
+        autoPay: loan.autoPay,
+        lastAutoPaymentDate: alreadyPosted ? (loan.lastAutoPaymentDate || '') : addMonthsSafe(nextDue, -1)
+      });
+    }
+  }
+
+  if (changed) toast('Automatic loan payment deducted from Bank ✓');
+}
+
+function addMonthsSafe(dateStr, months) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const target = new Date(Date.UTC(y, m - 1 + months, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  const day = Math.min(d, lastDay);
+  return `${target.getUTCFullYear()}-${String(target.getUTCMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+
 // ======= LOANS =======
 window.addLoan = async function() {
   const dir = document.getElementById('l-dir').value;
@@ -2143,15 +2219,19 @@ window.addLoan = async function() {
   const paid = parseFloat(document.getElementById('l-paid').value||0);
   const date = document.getElementById('l-date').value;
   const due = document.getElementById('l-due').value;
+  const installment = parseFloat(document.getElementById('l-installment').value || 0);
+  const autoPay = document.getElementById('l-auto-pay').value === 'yes';
   const notes = document.getElementById('l-notes').value;
   if (!person || !amount || !date) { toast('Fill person, amount, date', 'error'); return; }
-  const entry = {direction: dir, person, amount, paidBack: paid, date, dueDate: due, notes};
+  if (dir === 'owe' && autoPay && (!due || !installment)) { toast('Enter the first due date and monthly payment amount', 'error'); return; }
+  const entry = {direction: dir, person, amount, paidBack: paid, date, dueDate: due, installment, autoPay: dir === 'owe' ? autoPay : false, notes};
   const id = await save('loans', entry);
   loanData.push({id, ...entry});
   renderLoans(); renderDashboard();
   document.getElementById('l-person').value = '';
   document.getElementById('l-amount').value = '';
   document.getElementById('l-paid').value = '';
+  document.getElementById('l-installment').value = '';
   document.getElementById('l-notes').value = '';
   toast('Loan recorded ✓');
 };
@@ -2189,8 +2269,8 @@ function renderLoans() {
       <td style="color:var(--green)">${fmt(r.paidBack||0)}</td>
       <td style="font-weight:700;color:${done?'var(--green)':'var(--yellow)'}">${fmt(remaining)}</td>
       <td>${r.date}</td>
-      <td style="color:var(--muted)">${r.dueDate||'—'}</td>
-      <td><span class="badge ${done?'badge-green':'badge-yellow'}">${done?'✅ Done':'⏳ Open'}</span></td>
+      <td style="color:var(--muted)">${r.dueDate||'—'}${r.autoPay && !done ? `<br><span style="font-size:0.7rem;color:var(--accent2)">Auto: ${fmt(r.installment||0)}/month from Bank</span>` : ''}</td>
+      <td><span class="badge ${done?'badge-green':'badge-yellow'}">${done?'✅ Paid Out':(r.autoPay?'🔁 Auto-paying':'⏳ Open')}</span></td>
       <td style="display:flex;gap:4px">
         <button class="btn btn-ghost btn-xs" onclick="updateLoanPayment('${r.id}')">Update</button>
         <button class="btn btn-danger btn-xs" onclick="deleteLoan('${r.id}')">Del</button>
