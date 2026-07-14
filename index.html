@@ -1563,7 +1563,7 @@ function renderMom() {
       <td><span class="badge ${r.type==='in'?'badge-green':'badge-red'}">${r.type==='in'?'💰 Mom deposited':'🛒 Bought for Mom'}</span></td>
       <td style="font-size:0.82rem;color:var(--muted)">${r.type==='out'?(r.payvia==='bank'?'🏦 Bank':'💵 Cash'):'🏦 Bank'}</td>
       <td style="font-weight:600;color:${r.type==='in'?'var(--green)':'var(--red)'}">${r.type==='in'?'+':'-'}${fmt(r.amount)}</td>
-      <td><button class="btn btn-danger btn-xs" onclick="deleteMomTxn('${r.id}')">Del</button></td>
+      <td style="display:flex;gap:5px;"><button class="btn btn-ghost btn-xs" onclick="editMomTxn('${r.id}')">✏️ Edit</button><button class="btn btn-danger btn-xs" onclick="deleteMomTxn('${r.id}')">Del</button></td>
     </tr>`).join('') || '<tr><td colspan="6" class="empty"><div class="empty-icon">👩</div><div class="empty-text">No transactions yet</div></td></tr>';
 
   // Set the date input default
@@ -2155,7 +2155,7 @@ function renderRecurringExpenseCentre() {
       <td>${source}</td>
       <td>${dueHtml}</td>
       <td>${status}</td>
-      <td><button class="btn btn-ghost btn-xs" onclick="showRecurringExpenseRecords('${r.id}')">View records</button></td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap;"><button class="btn btn-ghost btn-xs" onclick="editExpenseQuick('${r.id}')">✏️ Edit</button><button class="btn btn-ghost btn-xs" onclick="showRecurringExpenseRecords('${r.id}')">View records</button></td>
     </tr>`;
   }).join('');
 }
@@ -2364,7 +2364,7 @@ function renderLoans() {
       <td style="color:var(--muted)">${r.dueDate||'—'}${r.autoPay && !done ? `<br><span style="font-size:0.7rem;color:var(--accent2)">Auto: ${fmt(r.installment||0)}/month from Bank</span>` : ''}</td>
       <td><span class="badge ${done?'badge-green':'badge-yellow'}">${done?'✅ Paid Out':(r.autoPay?'🔁 Auto-paying':'⏳ Open')}</span></td>
       <td style="display:flex;gap:4px">
-        <button class="btn btn-ghost btn-xs" onclick="updateLoanPayment('${r.id}')">Update</button>
+        <button class="btn btn-ghost btn-xs" onclick="editLoan('${r.id}')">✏️ Edit</button><button class="btn btn-ghost btn-xs" onclick="updateLoanPayment('${r.id}')">Payment</button>
         <button class="btn btn-danger btn-xs" onclick="deleteLoan('${r.id}')">Del</button>
       </td>
     </tr>`;
@@ -2574,7 +2574,7 @@ function renderBusiness() {
       <td>${r.desc||'—'}</td>
       <td>${r.category}</td>
       <td style="color:${r.type==='revenue'?'var(--green)':'var(--red)'};font-weight:600">${fmt(r.amount)}</td>
-      <td><button class="btn btn-danger btn-xs" onclick="deleteBusiness('${r.id}')">Del</button></td>
+      <td style="display:flex;gap:5px;"><button class="btn btn-ghost btn-xs" onclick="editBusiness('${r.id}')">✏️ Edit</button><button class="btn btn-danger btn-xs" onclick="deleteBusiness('${r.id}')">Del</button></td>
     </tr>`).join('') || '<tr><td colspan="6" class="empty"><div class="empty-icon">📈</div><div class="empty-text">No business entries yet</div></td></tr>';
   // Chart: last 6 months
   const months = [];
@@ -2646,7 +2646,7 @@ function renderCash() {
       <td style="color:var(--green)">${r.type==='in'  ? fmt(r.amount) : ''}</td>
       <td style="color:var(--red)">${r.type==='out' ? fmt(r.amount) : ''}</td>
       <td style="font-weight:600;color:${(balMap[r.id]||0)>=0?'var(--green)':'var(--red)'}">${fmt(balMap[r.id])}</td>
-      <td><button class="btn btn-danger btn-xs" onclick="deleteCash('${r.id}')">Del</button></td>
+      <td style="display:flex;gap:5px;"><button class="btn btn-ghost btn-xs" onclick="editCash('${r.id}')">✏️ Edit</button><button class="btn btn-danger btn-xs" onclick="deleteCash('${r.id}')">Del</button></td>
     </tr>`).join('') || '<tr><td colspan="6" class="empty"><div class="empty-icon">💵</div><div class="empty-text">No cash entries yet</div></td></tr>';
   paginateTable('cash-table','cash');
 }
@@ -2977,7 +2977,7 @@ function renderBudgets() {
           <span style="color:${color};font-size:0.8rem;margin-left:8px;">${fmt(spent)} / ${fmt(b.limit)}</span>
           ${pct>=100?'<span class="badge badge-red" style="margin-left:6px;">Over budget!</span>':pct>=80?'<span class="badge badge-yellow" style="margin-left:6px;">Near limit</span>':''}
         </div>
-        <button class="btn btn-danger btn-xs" onclick="deleteBudget('${b.id}')">✕</button>
+        <div style="display:flex;gap:5px;"><button class="btn btn-ghost btn-xs" onclick="editBudget('${b.id}')">✏️ Edit</button><button class="btn btn-danger btn-xs" onclick="deleteBudget('${b.id}')">✕</button></div>
       </div>
       <div class="progress-bar"><div style="height:100%;border-radius:99px;width:${pct}%;background:${color};transition:width 0.4s;"></div></div>
       <div style="text-align:right;font-size:0.72rem;color:var(--muted);margin-top:3px;">${pct.toFixed(0)}% of monthly limit used</div>
@@ -3187,6 +3187,7 @@ function renderDashboard() {
 let saleItemRowId = 0;
 
 window.openSaleModal = function() {
+  editingSaleId = null;
   document.getElementById('sale-date').value = today();
   document.getElementById('sale-desc').value = '';
   document.getElementById('sale-target-total').value = '';
@@ -3299,6 +3300,7 @@ function updateModalTotals() {
   profEl.style.color = totalProfit >= 0 ? 'var(--green)' : 'var(--red)';
 }
 
+let editingSaleId = null;
 window.saveSale = async function() {
   const date = document.getElementById('sale-date').value;
   const desc = document.getElementById('sale-desc').value.trim();
@@ -3311,12 +3313,21 @@ window.saveSale = async function() {
   const totalCost   = items.reduce((s,i)=>s+i.costTot,0);
   const totalProfit = totalSell - totalCost;
   const entry = { date, desc, items, totalSell, totalCost, totalProfit };
-  const id = await save('sales', entry);
-  if (id) {
-    salesData.push({ id, ...entry });
-    renderSales();
+  if (editingSaleId) {
+    await update('sales', editingSaleId, entry);
+    salesData = salesData.map(x => x.id === editingSaleId ? {...x, ...entry} : x);
+    editingSaleId = null;
+    renderSales(); renderBusiness();
     closeSaleModal();
-    toast('Sale recorded ✓');
+    toast('Sale updated ✓');
+  } else {
+    const id = await save('sales', entry);
+    if (id) {
+      salesData.push({ id, ...entry });
+      renderSales(); renderBusiness();
+      closeSaleModal();
+      toast('Sale recorded ✓');
+    }
   }
 };
 
@@ -3361,10 +3372,117 @@ function renderSales() {
       <td style="color:var(--red);font-weight:600;">${fmt(r.totalCost)}</td>
       <td style="color:${r.totalProfit>=0?'var(--green)':'var(--red)'};font-weight:700;">${fmt(r.totalProfit)}</td>
       <td><span class="badge ${margin>=0?'badge-green':'badge-red'}">${margin.toFixed(1)}%</span></td>
-      <td><button class="btn btn-danger btn-xs" onclick="deleteSale('${r.id}')">Del</button></td>
+      <td style="display:flex;gap:5px;"><button class="btn btn-ghost btn-xs" onclick="editSale('${r.id}')">✏️ Edit</button><button class="btn btn-danger btn-xs" onclick="deleteSale('${r.id}')">Del</button></td>
     </tr>`;
   }).join('') : '<tr><td colspan="8" class="empty"><div class="empty-icon">🛒</div><div class="empty-text">No sales yet — click "+ Add Sale" to record one</div></td></tr>';
 }
+
+
+// ======= UNIVERSAL EDITING =======
+function askText(label, current) {
+  const v = prompt(label, current ?? '');
+  return v === null ? null : v.trim();
+}
+function askAmount(label, current) {
+  const v = prompt(label, Number(current || 0));
+  if (v === null) return null;
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 0) { toast('Enter a valid amount', 'error'); return null; }
+  return n;
+}
+
+window.editExpenseQuick = function(id) {
+  editRows.exp = editRows.exp === id ? null : id;
+  expenseStatusFilter = 'all'; expFilter = 'all';
+  const search = document.getElementById('search-expense'); if (search) search.value = '';
+  renderExpenses();
+  setTimeout(() => document.getElementById('edit-exp-'+id)?.scrollIntoView({behavior:'smooth',block:'center'}), 50);
+};
+
+window.editMomTxn = async function(id) {
+  const r = momTxnData.find(x=>x.id===id); if(!r) return;
+  const desc=askText('Description:',r.desc); if(desc===null) return;
+  const amount=askAmount('Amount (GYD):',r.amount); if(amount===null) return;
+  const date=askText('Date (YYYY-MM-DD):',r.date); if(date===null) return;
+  const type=askText('Type: in or out',r.type); if(type===null) return;
+  if(!['in','out'].includes(type)){toast('Type must be in or out','error');return;}
+  let payvia=r.payvia||'bank';
+  if(type==='out'){ const p=askText('Paid from: bank or cash',payvia); if(p===null)return; if(!['bank','cash'].includes(p)){toast('Use bank or cash','error');return;} payvia=p; }
+  else payvia='bank';
+  const changes={desc,amount,date,type,payvia};
+  await update('momTransactions',id,changes);
+  momTxnData=momTxnData.map(x=>x.id===id?{...x,...changes}:x);
+  momMoney=momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)-momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
+  renderMom(); renderDashboard(); toast('Mom transaction updated ✓');
+};
+
+window.editLoan = async function(id) {
+  const r=loanData.find(x=>x.id===id); if(!r)return;
+  const person=askText('Person or entity:',r.person); if(person===null)return;
+  const amount=askAmount('Original loan amount (GYD):',r.amount); if(amount===null)return;
+  const paidBack=askAmount('Amount paid back so far (GYD):',r.paidBack||0); if(paidBack===null)return;
+  const date=askText('Loan date (YYYY-MM-DD):',r.date); if(date===null)return;
+  const dueDate=askText('Next due date (YYYY-MM-DD, or blank):',r.dueDate||''); if(dueDate===null)return;
+  const installment=askAmount('Automatic monthly installment (GYD):',r.installment||0); if(installment===null)return;
+  const auto=askText('Automatic bank deduction? yes or no',r.autoPay?'yes':'no'); if(auto===null)return;
+  const notes=askText('Notes:',r.notes||''); if(notes===null)return;
+  const changes={person,amount,paidBack,date,dueDate,installment,autoPay:r.direction==='owe'&&auto.toLowerCase()==='yes',notes};
+  await update('loans',id,changes); loanData=loanData.map(x=>x.id===id?{...x,...changes}:x);
+  renderLoans(); renderDashboard(); toast('Loan updated ✓');
+};
+
+window.editBusiness = async function(id) {
+  const r=bizData.find(x=>x.id===id); if(!r)return;
+  const type=askText('Type: revenue or cost',r.type); if(type===null)return;
+  if(!['revenue','cost'].includes(type)){toast('Use revenue or cost','error');return;}
+  const desc=askText('Description:',r.desc||''); if(desc===null)return;
+  const category=askText('Category:',r.category||'Other'); if(category===null)return;
+  const amount=askAmount('Amount (GYD):',r.amount); if(amount===null)return;
+  const date=askText('Date (YYYY-MM-DD):',r.date); if(date===null)return;
+  const changes={type,desc,category,amount,date}; await update('business',id,changes);
+  bizData=bizData.map(x=>x.id===id?{...x,...changes}:x); renderBusiness(); toast('Business entry updated ✓');
+};
+
+window.editCash = async function(id) {
+  const r=cashData.find(x=>x.id===id); if(!r)return;
+  const type=askText('Type: in or out',r.type); if(type===null)return;
+  if(!['in','out'].includes(type)){toast('Use in or out','error');return;}
+  const desc=askText('Description:',r.desc||''); if(desc===null)return;
+  const amount=askAmount('Amount (GYD):',r.amount); if(amount===null)return;
+  const date=askText('Date (YYYY-MM-DD):',r.date); if(date===null)return;
+  const changes={type,desc,amount,date}; await update('cashTransactions',id,changes);
+  cashData=cashData.map(x=>x.id===id?{...x,...changes}:x); renderCash(); renderDashboard(); toast('Cash entry updated ✓');
+};
+
+window.editBudget = async function(id) {
+  const r=budgetData.find(x=>x.id===id); if(!r)return;
+  const category=askText('Budget category:',r.category); if(category===null)return;
+  const limit=askAmount('Monthly budget limit (GYD):',r.limit); if(limit===null)return;
+  const changes={category,limit}; await update('budgets',id,changes);
+  budgetData=budgetData.map(x=>x.id===id?{...x,...changes}:x); renderBudgets(); renderDashboard(); toast('Budget updated ✓');
+};
+
+window.editSale = function(id) {
+  const r=salesData.find(x=>x.id===id); if(!r)return;
+  editingSaleId=id;
+  const overlay=document.getElementById('sale-modal-overlay'); overlay.classList.add('open');
+  document.getElementById('sale-date').value=r.date||today();
+  document.getElementById('sale-desc').value=r.desc||'';
+  document.getElementById('sale-target-total').value='';
+  const tbody=document.getElementById('sale-items-body'); tbody.innerHTML='';
+  (r.items||[]).forEach(item=>{
+    addSaleItemRow(); const rid=saleItemRowId;
+    document.getElementById('si-name-'+rid).value=item.name||'';
+    document.getElementById('si-qty-'+rid).value=item.qty||1;
+    document.getElementById('si-cost-'+rid).value=item.cost||0;
+    document.getElementById('si-sell-'+rid).value=item.sell||0;
+    updateSaleRow(rid);
+  });
+  if(!(r.items||[]).length) addSaleItemRow();
+  overlay.querySelector('div[style*="font-size:1.2rem"]')?.replaceChildren(document.createTextNode('Edit Sale / Transaction'));
+  updateModalTotals();
+};
+
 </script>
 </body>
 </html>
