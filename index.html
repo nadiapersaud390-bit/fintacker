@@ -293,6 +293,18 @@
   .balance-hero-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
   .balance-hero-amount { font-size: 2.8rem; font-weight: 800; color: var(--accent2); letter-spacing: -1px; }
   .balance-hero-sub { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+
+  /* Professional table controls */
+  .table-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:10px 0 14px; }
+  .status-tabs { display:inline-flex; gap:5px; padding:4px; background:var(--surface); border:1px solid var(--border); border-radius:10px; }
+  .status-tab { border:0; background:transparent; color:var(--muted); padding:7px 12px; border-radius:7px; cursor:pointer; font:600 0.78rem var(--font); }
+  .status-tab.active { background:var(--accent); color:#fff; box-shadow:0 4px 12px rgba(108,99,255,.25); }
+  .pagination { display:flex; align-items:center; justify-content:flex-end; gap:6px; padding-top:14px; flex-wrap:wrap; }
+  .page-btn { min-width:34px; height:32px; border:1px solid var(--border); background:var(--surface); color:var(--muted); border-radius:8px; cursor:pointer; font:600 .78rem var(--font); }
+  .page-btn:hover:not(:disabled), .page-btn.active { border-color:var(--accent); color:#fff; background:var(--accent); }
+  .page-btn:disabled { opacity:.4; cursor:not-allowed; }
+  .page-info { color:var(--muted); font-size:.76rem; margin-right:6px; }
+  .unpaid-highlight { background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(245,158,11,.05)); border-color:rgba(239,68,68,.28); }
 </style>
 </head>
 <body>
@@ -492,10 +504,18 @@
         <div id="dash-bills-due"></div>
       </div>
 
+      <div id="dash-all-unpaid-card" class="card mb24 unpaid-highlight" style="display:none;">
+        <div class="section-header">
+          <div class="section-title">⏳ All Unpaid Expenses</div>
+          <button class="btn btn-ghost btn-sm" onclick="openUnpaidExpenses()">View in Expenses →</button>
+        </div>
+        <div id="dash-all-unpaid"></div>
+      </div>
+
       <div class="card mb24">
         <div class="section-header">
           <div class="section-title">🔁 Recurring Due</div>
-          <span style="font-size:0.78rem;color:var(--muted);">Bills, salary &amp; transfers ready for their next round</span>
+          <span style="font-size:0.78rem;color:var(--muted);">Automatic repeats are posted when due; paid expenses deduct from their selected Bank or Cash account</span>
         </div>
         <div id="dash-recurring-due"></div>
       </div>
@@ -907,8 +927,13 @@
             <button class="period-tab" onclick="filterExpPeriod('year',this)">This Year</button>
           </div>
         </div>
-        <div style="margin:8px 0 12px;">
-          <input type="text" id="search-expense" placeholder="🔍 Search expenses..." oninput="renderExpenses()" style="width:100%;max-width:320px;font-size:0.85rem;"/>
+        <div class="table-toolbar">
+          <input type="text" id="search-expense" placeholder="🔍 Search expenses..." oninput="resetExpensePage();renderExpenses()" style="width:100%;max-width:320px;font-size:0.85rem;"/>
+          <div class="status-tabs" aria-label="Expense status filter">
+            <button class="status-tab active" data-exp-status="all" onclick="setExpenseStatus('all',this)">All</button>
+            <button class="status-tab" data-exp-status="unpaid" onclick="setExpenseStatus('unpaid',this)">⏳ Unpaid</button>
+            <button class="status-tab" data-exp-status="paid" onclick="setExpenseStatus('paid',this)">✅ Paid</button>
+          </div>
         </div>
         <div class="table-wrap">
           <table>
@@ -1323,6 +1348,9 @@ const today = () => new Date().toISOString().slice(0,10);
 let bankData = [], incomeData = [], expenseData = [], loanData = [], savingsData = [], bizData = [], salesData = [], cashData = [];
 let goalContributionsData = [], budgetData = [];
 let bankFilter = 'all', expFilter = 'all', bizFilter = 'all', salesFilter = 'all';
+let expenseStatusFilter = 'all';
+const tablePages = {};
+const TABLE_PAGE_SIZE = 10;
 let db, fs, auth, authFns, currentUser = null;
 let momMoney = 0;
 let momTxnData = [];
@@ -1427,6 +1455,7 @@ async function loadAll() {
   [goalContributionsData, budgetData] = await Promise.all([loadCol('goalContributions'), loadCol('budgets')]);
   momMoney = momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)
            - momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
+  await processAutomaticRecurringExpenses();
   renderBank(); renderCash(); renderIncome(); renderExpenses(); renderLoans(); renderSavings(); renderBusiness();
   renderSales(); renderMom(); renderBudgets();
   renderDashboard();
@@ -1558,6 +1587,38 @@ function inPeriod(dateStr, period) {
   return true;
 }
 
+// ======= PROFESSIONAL PAGINATION =======
+function paginateTable(tbodyId, pageKey, pageSize=TABLE_PAGE_SIZE) {
+  const tbody = document.getElementById(tbodyId); if (!tbody) return;
+  const table = tbody.closest('table'); if (!table) return;
+  let pager = table.parentElement.querySelector(`.pagination[data-key="${pageKey}"]`);
+  if (!pager) {
+    pager = document.createElement('div');
+    pager.className = 'pagination'; pager.dataset.key = pageKey;
+    table.parentElement.appendChild(pager);
+  }
+  const allRows = [...tbody.children];
+  const primary = allRows.filter(r => !r.id?.startsWith('edit-'));
+  if (!primary.length || primary[0].querySelector('.empty')) { pager.innerHTML=''; return; }
+  const totalPages = Math.max(1, Math.ceil(primary.length/pageSize));
+  tablePages[pageKey] = Math.min(tablePages[pageKey]||1,totalPages);
+  const page = tablePages[pageKey];
+  primary.forEach((row,i)=>{
+    const show = i >= (page-1)*pageSize && i < page*pageSize;
+    row.style.display = show ? '' : 'none';
+    const edit = row.nextElementSibling;
+    if (edit?.id?.startsWith('edit-') && !show) edit.style.display='none';
+  });
+  const nums=[];
+  for(let i=1;i<=totalPages;i++) if(i===1||i===totalPages||Math.abs(i-page)<=1) nums.push(i);
+  let last=0, buttons='';
+  nums.forEach(n=>{ if(last && n-last>1) buttons+='<span class="page-info">…</span>'; buttons+=`<button class="page-btn ${n===page?'active':''}" onclick="goTablePage('${tbodyId}','${pageKey}',${n},${pageSize})">${n}</button>`; last=n; });
+  const start=(page-1)*pageSize+1, end=Math.min(page*pageSize,primary.length);
+  pager.innerHTML=`<span class="page-info">Showing ${start}–${end} of ${primary.length}</span><button class="page-btn" ${page===1?'disabled':''} onclick="goTablePage('${tbodyId}','${pageKey}',${page-1},${pageSize})">‹</button>${buttons}<button class="page-btn" ${page===totalPages?'disabled':''} onclick="goTablePage('${tbodyId}','${pageKey}',${page+1},${pageSize})">›</button>`;
+}
+window.goTablePage=function(tbodyId,key,page,size){ tablePages[key]=page; paginateTable(tbodyId,key,size); };
+function resetExpensePage(){ tablePages.expenses=1; }
+
 // ======= RECURRING DUE DETECTION =======
 // Figures out which recurring bank transfers, expenses, or income entries
 // are due for their next round, based on the last entry in that series.
@@ -1574,6 +1635,42 @@ function nextDueDate(dateStr, freq) {
   }
   return d.toISOString().slice(0,10);
 }
+async function processAutomaticRecurringExpenses() {
+  const todayStr = today();
+  const series = latestByKey(expenseData.filter(x=>x.recurring), x=>['exp',x.category,x.desc,x.recurring].join('|'));
+  let created = 0;
+  for (const seed of series) {
+    let last = seed;
+    let next = nextDueDate(last.date, last.recurring);
+    let safety = 0;
+    while (next && next <= todayStr && safety++ < 60) {
+      const duplicate = expenseData.some(x => x.autoRecurring && x.seriesKey === ['exp',seed.category,seed.desc,seed.recurring].join('|') && x.date === next);
+      if (duplicate) { last = expenseData.find(x => x.autoRecurring && x.seriesKey === ['exp',seed.category,seed.desc,seed.recurring].join('|') && x.date === next); next = nextDueDate(next, seed.recurring); continue; }
+      const seriesKey = ['exp',seed.category,seed.desc,seed.recurring].join('|');
+      const dueDate = last.dueDate ? nextDueDate(last.dueDate, seed.recurring) : next;
+      const entry = {
+        category: seed.category, desc: seed.desc, amount: seed.amount, date: next,
+        recurring: seed.recurring, paid: seed.paid || 'unpaid', paidVia: seed.paidVia || '',
+        dueDate, items: seed.items || [], bankTxnId:null, cashTxnId:null,
+        autoRecurring:true, seriesKey
+      };
+      const id = await save('expenses', entry); if (!id) break;
+      if (entry.paid === 'paid') {
+        if (entry.paidVia === 'cash') {
+          const cashEntry={type:'out',desc:'Recurring expense: '+(entry.desc||entry.category),amount:entry.amount,date:next,notes:entry.category,auto:true,linkType:'expense',linkId:id};
+          const cid=await save('cashTransactions',cashEntry);
+          if(cid){ cashData.push({id:cid,...cashEntry}); entry.cashTxnId=cid; await update('expenses',id,{cashTxnId:cid}); }
+        } else {
+          const bid=await createLinkedBankTxn({amount:entry.amount,desc:'Recurring expense: '+(entry.desc||entry.category),category:entry.category,date:next,linkType:'expense',linkId:id});
+          if(bid){ entry.bankTxnId=bid; await update('expenses',id,{bankTxnId:bid}); }
+        }
+      }
+      const made={id,...entry}; expenseData.push(made); last=made; created++; next=nextDueDate(next,seed.recurring);
+    }
+  }
+  if (created) toast(created+' recurring expense'+(created===1?'':'s')+' posted automatically ✓');
+}
+
 function latestByKey(arr, keyFn) {
   const map = {};
   arr.forEach(x => { const k = keyFn(x); if (!map[k] || x.date > map[k].date) map[k] = x; });
@@ -1618,11 +1715,13 @@ window.quickAddRecurring = async function(source, lastId, nextDate) {
     toast('Recurring transfer added ✓');
   } else if (source === 'expense') {
     const last = expenseData.find(x=>x.id===lastId); if(!last) return;
-    const entry = {category:last.category, desc:last.desc, amount:last.amount, date:nextDate, recurring:last.recurring, paid:'unpaid', bankTxnId:null};
+    const entry = {category:last.category, desc:last.desc, amount:last.amount, date:nextDate, recurring:last.recurring, paid:last.paid||'unpaid', paidVia:last.paidVia||'', dueDate:last.dueDate?nextDueDate(last.dueDate,last.recurring):nextDate, items:last.items||[], bankTxnId:null, cashTxnId:null, autoRecurring:true, seriesKey:['exp',last.category,last.desc,last.recurring].join('|')};
     const id = await save('expenses', entry);
+    if (entry.paid==='paid' && entry.paidVia==='cash') { const ce={type:'out',desc:'Recurring expense: '+(entry.desc||entry.category),amount:entry.amount,date:nextDate,notes:entry.category,auto:true,linkType:'expense',linkId:id}; const cid=await save('cashTransactions',ce); if(cid){cashData.push({id:cid,...ce});entry.cashTxnId=cid;await update('expenses',id,{cashTxnId:cid});} }
+    else if (entry.paid==='paid') { const bid=await createLinkedBankTxn({amount:entry.amount,desc:'Recurring expense: '+(entry.desc||entry.category),category:entry.category,date:nextDate,linkType:'expense',linkId:id}); if(bid){entry.bankTxnId=bid;await update('expenses',id,{bankTxnId:bid});} }
     expenseData.push({id, ...entry});
-    renderExpenses();
-    toast('Recurring expense added as Unpaid ✓');
+    renderExpenses(); renderBank(); renderCash();
+    toast(entry.paid==='paid' ? 'Recurring expense posted and deducted ✓' : 'Recurring expense added as Unpaid ✓');
   } else if (source === 'income') {
     const last = incomeData.find(x=>x.id===lastId); if(!last) return;
     const entry = {source:last.source, amount:last.amount, frequency:last.frequency, date:nextDate, notes:last.notes};
@@ -1756,6 +1855,7 @@ function renderBank() {
       </td>
     </tr>` + bankEditRow(r)).join('');
   document.getElementById('bank-table').innerHTML = rows || '<tr><td colspan="8" class="empty"><div class="empty-icon">🏦</div><div class="empty-text">No transactions yet</div></td></tr>';
+  paginateTable('bank-table','bank');
 }
 
 // ======= INCOME =======
@@ -1941,11 +2041,23 @@ window.togglePaid = async function(id, current) {
   toast(newVal === 'paid' ? `Marked Paid — deducted from ${src} ✓` : `Marked Unpaid — added back to ${src} ✓`);
 };
 window.filterExpPeriod = function(p, el) {
-  expFilter = p;
+  expFilter = p; resetExpensePage();
   document.querySelectorAll('#page-expenses .period-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderExpenses();
 };
+window.setExpenseStatus = function(status, el) {
+  expenseStatusFilter = status; resetExpensePage();
+  document.querySelectorAll('[data-exp-status]').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active'); renderExpenses();
+};
+window.openUnpaidExpenses = function() {
+  document.querySelector('[data-page="expenses"]').click();
+  expenseStatusFilter='unpaid';
+  document.querySelectorAll('[data-exp-status]').forEach(x=>x.classList.toggle('active',x.dataset.expStatus==='unpaid'));
+  resetExpensePage(); renderExpenses();
+};
+
 window.duplicateExpense = function(id) {
   const r = expenseData.find(x => x.id === id); if (!r) return;
   if ([...document.getElementById('e-cat').options].some(o=>o.value===r.category)) document.getElementById('e-cat').value = r.category;
@@ -1967,7 +2079,7 @@ function renderExpenses() {
   document.getElementById('exp-paid').textContent = fmt(monthExp.filter(x=>x.paid==='paid').reduce((s,x)=>s+x.amount,0));
   document.getElementById('exp-year').textContent = fmt(expenseData.filter(x=>inPeriod(x.date,'year')).reduce((s,x)=>s+x.amount,0));
   const eSearch = (document.getElementById('search-expense')?.value || '').toLowerCase();
-  const filtered = [...expenseData].filter(x => inPeriod(x.date, expFilter) && (!eSearch || (x.desc||'').toLowerCase().includes(eSearch) || (x.category||'').toLowerCase().includes(eSearch) || String(x.amount).includes(eSearch))).sort((a,b)=>a.date<b.date?1:-1);
+  const filtered = [...expenseData].filter(x => inPeriod(x.date, expFilter) && (expenseStatusFilter==='all' || x.paid===expenseStatusFilter) && (!eSearch || (x.desc||'').toLowerCase().includes(eSearch) || (x.category||'').toLowerCase().includes(eSearch) || String(x.amount).includes(eSearch))).sort((a,b)=>a.date<b.date?1:-1);
   document.getElementById('expense-table').innerHTML = filtered.map(r => {
     const items = r.items || [];
     const itemsHtml = items.length
@@ -2020,6 +2132,7 @@ function renderExpenses() {
     </tr>` + expenseEditRow(r);
   }).join('') || '<tr><td colspan="9" class="empty"><div class="empty-icon">🧾</div><div class="empty-text">No expenses yet</div></td></tr>';
   renderBudgets();
+  paginateTable('expense-table','expenses');
 }
 
 // ======= LOANS =======
@@ -2363,6 +2476,7 @@ function renderCash() {
       <td style="font-weight:600;color:${(balMap[r.id]||0)>=0?'var(--green)':'var(--red)'}">${fmt(balMap[r.id])}</td>
       <td><button class="btn btn-danger btn-xs" onclick="deleteCash('${r.id}')">Del</button></td>
     </tr>`).join('') || '<tr><td colspan="6" class="empty"><div class="empty-icon">💵</div><div class="empty-text">No cash entries yet</div></td></tr>';
+  paginateTable('cash-table','cash');
 }
 
 // ======= EXPENSE ITEM ROWS =======
@@ -2722,8 +2836,17 @@ function renderBudgetAlerts() {
     </div>`).join('');
 }
 
+function renderAllUnpaid() {
+  const card=document.getElementById('dash-all-unpaid-card'), el=document.getElementById('dash-all-unpaid');
+  if(!card||!el) return;
+  const rows=[...expenseData].filter(x=>x.paid==='unpaid').sort((a,b)=>(a.dueDate||a.date)>(b.dueDate||b.date)?1:-1);
+  if(!rows.length){card.style.display='none';return;} card.style.display='';
+  el.innerHTML=rows.slice(0,8).map(r=>`<div style="display:grid;grid-template-columns:minmax(180px,1fr) auto auto;gap:14px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(37,42,58,.55);"><div><strong>${r.desc||r.category}</strong><div style="font-size:.74rem;color:var(--muted);margin-top:3px;">${r.category}${r.recurring?' · repeats '+r.recurring:''}</div></div><span style="font-size:.78rem;color:${r.dueDate&&r.dueDate<today()?'var(--red)':'var(--muted)'};">${r.dueDate?'Due '+r.dueDate:'Added '+r.date}</span><strong style="color:var(--red);">${fmt(r.amount)}</strong></div>`).join('')+(rows.length>8?`<div style="padding-top:10px;color:var(--muted);font-size:.76rem;">+ ${rows.length-8} more unpaid expense${rows.length-8===1?'':'s'}</div>`:'');
+}
+
 let catChart = null, flowChart = null;
 function renderDashboard() {
+  renderAllUnpaid();
   renderRecurringDue();
   renderBillsDue();
 
