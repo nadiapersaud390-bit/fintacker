@@ -406,7 +406,7 @@
           <div style="padding:0 0 0 20px;">
             <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">✅ Actually Available</div>
             <div style="font-size:2rem;font-weight:800;" id="rp-actual">GYD $0</div>
-            <div style="font-size:0.75rem;margin-top:3px;" id="rp-actual-sub">Bank − Bills − Mom's</div>
+            <div style="font-size:0.75rem;margin-top:3px;" id="rp-actual-sub">Bank + Cash − Savings − Bills − Mom's</div>
             <div style="font-size:0.7rem;color:var(--muted);margin-top:2px;" id="rp-actual-formula"></div>
           </div>
         </div>
@@ -2746,9 +2746,10 @@ function renderDashboard() {
   const totalUnpaid = unpaidItems.reduce((s,x)=>s+x.amount,0);
   const unpaidCount = unpaidItems.length;
 
-  // ---- ACTUALLY AVAILABLE = Bank Balance − Unpaid Expenses − Mom's Money ----
-  // Savings are already deducted from bank via linked withdrawal transactions.
-  const actualAvail = bankBal - totalUnpaid - momMoney;
+  // ---- ACTUALLY AVAILABLE = Bank + Cash − Savings − Unpaid Expenses − Mom's Money ----
+  // Savings are treated as reserved money and are therefore not available to spend.
+  const totalFunds = bankBal + cashBal;
+  const actualAvail = totalFunds - totalSaved - totalUnpaid - momMoney;
 
   // ---- Populate reality panel ----
   document.getElementById('rp-bank').textContent        = fmt(bankBal);
@@ -2765,10 +2766,11 @@ function renderDashboard() {
   actualSub.textContent = actualAvail >= 0 ? 'You\'re in the clear ✓' : 'Shortfall — you\'re in the minus';
   actualSub.style.color = actualAvail >= 0 ? 'var(--green)' : 'var(--red)';
   document.getElementById('rp-actual-formula').textContent =
-    'Bank ' + fmt(bankBal) + ' − Unpaid ' + fmt(totalUnpaid) + ' − Mom\'s ' + fmt(momMoney) + ' = ' + fmt(actualAvail);
+    'Bank ' + fmt(bankBal) + ' + Cash ' + fmt(cashBal) + ' − Savings ' + fmt(totalSaved) +
+    ' − Unpaid ' + fmt(totalUnpaid) + ' − Mom\'s ' + fmt(momMoney) + ' = ' + fmt(actualAvail);
 
-  // ---- Breakdown bar (out of bank balance) ----
-  const barTotal = Math.max(Math.abs(bankBal), 0.01);
+  // ---- Breakdown bar (out of total available funds: bank + cash) ----
+  const barTotal = Math.max(Math.abs(totalFunds), 0.01);
   const pAvail = Math.max(0, Math.min(100, (actualAvail / barTotal) * 100));
   const pSave  = Math.max(0, Math.min(100 - pAvail, (totalSaved / barTotal) * 100));
   const pBills = Math.max(0, Math.min(100 - pAvail - pSave, ((totalUnpaid + momMoney) / barTotal) * 100));
@@ -2776,7 +2778,7 @@ function renderDashboard() {
   document.getElementById('rp-bar-save').style.width  = pSave  + '%';
   document.getElementById('rp-bar-bills').style.width = pBills + '%';
   document.getElementById('rp-bar-label').textContent =
-    fmt(Math.max(0,actualAvail)) + ' free  |  ' + fmt(totalSaved) + ' saved  |  ' + fmt(totalUnpaid) + ' owed';
+    fmt(Math.max(0,actualAvail)) + ' free  |  ' + fmt(totalSaved) + ' saved  |  ' + fmt(totalUnpaid) + ' unpaid  |  ' + fmt(momMoney) + ' Mom\'s';
 
   // ---- Monthly income & expenses ----
   const monthInc = incomeData.filter(x=>inPeriod(x.date,'month')).reduce((s,x)=>s+x.amount,0);
