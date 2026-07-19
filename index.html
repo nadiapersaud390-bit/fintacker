@@ -1487,7 +1487,6 @@ async function loadAll() {
   [goalContributionsData, budgetData] = await Promise.all([loadCol('goalContributions'), loadCol('budgets')]);
   momMoney = momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)
            - momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
-  await processAutomaticRecurringExpenses();
   await processAutomaticLoanPayments();
   renderBank(); renderCash(); renderIncome(); renderExpenses(); renderLoans(); renderSavings(); renderBusiness();
   renderSales(); renderMom(); renderBudgets();
