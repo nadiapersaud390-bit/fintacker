@@ -396,6 +396,94 @@
     #sale-modal-overlay > div { width:100% !important; max-height:94vh !important; border-radius:18px 18px 0 0 !important; padding:20px 16px !important; }
   }
 
+
+  /* Calendar, reports and activity centre */
+  .feature-title-row { display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:24px; }
+  .page-description { color:var(--muted);font-size:.82rem;line-height:1.5; }
+  .calendar-layout { display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,.75fr);gap:16px; }
+  .calendar-card { padding:18px; }
+  .calendar-toolbar { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px;text-align:center; }
+  .calendar-month-title { font-size:1.12rem;font-weight:750; }
+  .calendar-today-link { border:0;background:transparent;color:var(--accent);font:600 .72rem var(--font);cursor:pointer;margin-top:3px; }
+  .calendar-weekdays,.calendar-grid { display:grid;grid-template-columns:repeat(7,minmax(0,1fr)); }
+  .calendar-weekdays { color:var(--muted);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;text-align:center;margin-bottom:7px; }
+  .calendar-weekdays span { padding:6px 2px; }
+  .calendar-grid { border-left:1px solid var(--border);border-top:1px solid var(--border);border-radius:10px;overflow:hidden; }
+  .calendar-day { min-height:108px;padding:8px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(13,15,20,.35);cursor:pointer;transition:.15s ease;overflow:hidden; }
+  .calendar-day:hover { background:rgba(108,99,255,.06); }
+  .calendar-day.outside { opacity:.38; }
+  .calendar-day.today { box-shadow:inset 0 0 0 2px var(--accent);background:rgba(108,99,255,.07); }
+  .calendar-day.selected { box-shadow:inset 0 0 0 2px var(--accent2); }
+  .calendar-day-number { font-size:.76rem;color:var(--muted);font-weight:700;margin-bottom:6px; }
+  .calendar-event { display:block;border-left:3px solid var(--accent);background:rgba(108,99,255,.1);border-radius:5px;padding:4px 5px;margin-bottom:4px;font-size:.67rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .calendar-event.expense,.agenda-dot.expense { border-color:var(--red); }
+  .calendar-event.loan,.agenda-dot.loan { border-color:var(--yellow); }
+  .calendar-event.savings,.agenda-dot.savings { border-color:var(--accent); }
+  .calendar-event.income,.agenda-dot.income { border-color:var(--green); }
+  .calendar-event.reminder,.agenda-dot.reminder { border-color:var(--accent2); }
+  .calendar-event.completed { opacity:.45;text-decoration:line-through; }
+  .calendar-more { color:var(--muted);font-size:.65rem;padding-left:4px; }
+  .agenda-card { min-height:430px; }
+  .agenda-item { display:flex;gap:10px;padding:11px 0;border-bottom:1px solid rgba(37,42,58,.55);align-items:flex-start; }
+  .agenda-dot { width:9px;height:34px;border-left:4px solid var(--accent);border-radius:3px;flex:0 0 auto; }
+  .agenda-main { min-width:0;flex:1; }
+  .agenda-title { font-size:.84rem;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .agenda-meta { color:var(--muted);font-size:.72rem;margin-top:3px;line-height:1.4; }
+  .agenda-amount { font-size:.8rem;font-weight:700;white-space:nowrap; }
+
+  .report-actions { display:flex;gap:9px;align-items:center;flex-wrap:wrap; }
+  .report-actions input[type=month] { min-height:39px; }
+  .report-metrics { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px; }
+  .report-metric { background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px;display:flex;flex-direction:column;gap:7px; }
+  .report-metric span { color:var(--muted);font-size:.73rem;text-transform:uppercase;letter-spacing:.35px; }
+  .report-metric strong { font-size:.97rem; }
+  .breakdown-row { margin-bottom:13px; }
+  .breakdown-head { display:flex;justify-content:space-between;gap:10px;font-size:.78rem;margin-bottom:5px; }
+  .breakdown-head span:first-child { font-weight:650; }
+  .report-list-row { display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid rgba(37,42,58,.55);font-size:.8rem; }
+  .report-list-row:last-child { border-bottom:0; }
+  .print-report-header { display:none; }
+
+  .activity-toolbar { display:grid;grid-template-columns:170px 210px minmax(220px,1fr);gap:10px;margin-bottom:13px; }
+  .activity-note { background:rgba(0,212,170,.07);border:1px solid rgba(0,212,170,.17);border-left:3px solid var(--accent2);border-radius:8px;padding:10px 12px;color:#c9d6d4;font-size:.76rem;line-height:1.5;margin-bottom:12px; }
+  .activity-user-stat { font-size:1rem;font-weight:700;color:var(--text);margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .activity-change { color:var(--muted);font-size:.72rem;line-height:1.45;max-width:310px; }
+  .activity-change strong { color:#c7cad4;font-weight:600; }
+  .activity-record { min-width:150px; }
+  .activity-record-title { font-weight:650;font-size:.81rem; }
+  .activity-record-id { color:var(--muted);font-size:.66rem;margin-top:2px; }
+  .toast-action { border:1px solid rgba(255,255,255,.25);background:transparent;color:inherit;border-radius:6px;padding:4px 9px;margin-left:12px;cursor:pointer;font:700 .73rem var(--font); }
+
+  @media(max-width:1000px) {
+    .calendar-layout { grid-template-columns:1fr; }
+    .report-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  @media(max-width:640px) {
+    .calendar-day { min-height:76px;padding:5px; }
+    .calendar-event { font-size:0;width:8px;height:8px;border:0;border-radius:50%;display:inline-block;padding:0;margin:2px;background:var(--accent); }
+    .calendar-event.expense { background:var(--red); }.calendar-event.loan{background:var(--yellow)}.calendar-event.savings{background:var(--accent)}.calendar-event.income{background:var(--green)}.calendar-event.reminder{background:var(--accent2)}
+    .calendar-more { display:block;padding:0;font-size:.58rem; }
+    .report-metrics { grid-template-columns:1fr 1fr; }
+    .activity-toolbar { grid-template-columns:1fr; }
+    .feature-title-row .btn { width:100%; }
+    .report-actions { width:100%; }.report-actions input,.report-actions button{flex:1;}
+  }
+
+  @media print {
+    body { background:#fff !important;color:#111 !important; }
+    .sidebar,#bottom-nav,#toast,.report-controls .btn,.report-controls .page-description { display:none !important; }
+    .main { margin:0 !important;padding:0 !important; }
+    .page { display:none !important; }
+    #page-reports { display:block !important; }
+    #page-reports .card,#page-reports .stat-card,#page-reports .report-metric { background:#fff !important;color:#111 !important;border:1px solid #d7d7d7 !important;box-shadow:none !important;break-inside:avoid; }
+    #page-reports .page-title,#page-reports strong,#page-reports td { color:#111 !important; }
+    #page-reports .stat-label,#page-reports .stat-sub,#page-reports .page-description,#page-reports th,#page-reports .report-metric span { color:#555 !important; }
+    .print-report-header { display:flex !important;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px;font-size:15px; }
+    .report-controls { margin-bottom:12px; }
+    .report-controls .report-actions input { border:0;background:#fff;color:#111;font-weight:700; }
+    canvas { max-height:230px !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -427,6 +515,8 @@
     <div class="sidebar-logo">Fin<span>Track</span></div>
     <div class="nav" id="nav">
       <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+      <div class="nav-item" data-page="calendar"><span class="nav-icon">🗓️</span><span>Calendar</span></div>
+      <div class="nav-item" data-page="reports"><span class="nav-icon">📑</span><span>Monthly Reports</span></div>
       <div class="nav-item" data-page="bank"><span class="nav-icon">🏦</span><span>Bank</span></div>
       <div class="nav-item" data-page="cash"><span class="nav-icon">💵</span><span>Cash in Hand</span></div>
       <div class="nav-item" data-page="income"><span class="nav-icon">💰</span><span>Income</span></div>
@@ -435,6 +525,7 @@
       <div class="nav-item" data-page="savings"><span class="nav-icon">🎯</span><span>Savings</span></div>
       <div class="nav-item" data-page="bizsales"><span class="nav-icon">📈</span><span>Business &amp; Sales</span></div>
       <div class="nav-item" data-page="mom"><span class="nav-icon">👩</span><span>Mom's Money</span></div>
+      <div class="nav-item" data-page="activity"><span class="nav-icon">🕘</span><span>Activity History</span></div>
     </div>
     <div style="padding:16px 20px;border-top:1px solid var(--border);margin-top:auto;">
       <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">Logged in as <strong id="user-name" style="color:var(--text);">—</strong></div>
@@ -445,6 +536,8 @@
   <!-- BOTTOM NAV (mobile only) -->
   <div id="bottom-nav">
     <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+    <div class="nav-item" data-page="calendar"><span class="nav-icon">🗓️</span><span>Calendar</span></div>
+    <div class="nav-item" data-page="reports"><span class="nav-icon">📑</span><span>Reports</span></div>
     <div class="nav-item" data-page="bank"><span class="nav-icon">🏦</span><span>Bank</span></div>
     <div class="nav-item" data-page="cash"><span class="nav-icon">💵</span><span>Cash</span></div>
     <div class="nav-item" data-page="income"><span class="nav-icon">💰</span><span>Income</span></div>
@@ -453,6 +546,7 @@
     <div class="nav-item" data-page="savings"><span class="nav-icon">🎯</span><span>Savings</span></div>
     <div class="nav-item" data-page="bizsales"><span class="nav-icon">📈</span><span>Business</span></div>
     <div class="nav-item" data-page="mom"><span class="nav-icon">👩</span><span>Mom</span></div>
+    <div class="nav-item" data-page="activity"><span class="nav-icon">🕘</span><span>History</span></div>
   </div>
 
   <!-- MAIN -->
@@ -611,6 +705,17 @@
         <div id="dash-recurring-due"></div>
       </div>
 
+      <div id="dash-calendar-card" class="card mb24" style="display:none;">
+        <div class="section-header">
+          <div>
+            <div class="section-title">🗓️ Upcoming Financial Schedule</div>
+            <div style="font-size:0.76rem;color:var(--muted);margin-top:3px;">Bills, loan payments, savings deadlines and reminders</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openPage('calendar')">Open Calendar →</button>
+        </div>
+        <div id="dash-calendar-events"></div>
+      </div>
+
       <div class="grid-2 mb24">
         <div class="card">
           <div class="section-header"><div class="section-title">Spending by Category</div></div>
@@ -635,6 +740,177 @@
           <table>
             <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr></thead>
             <tbody id="dash-recent"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ===== FINANCIAL CALENDAR ===== -->
+    <div id="page-calendar" class="page">
+      <div class="feature-title-row">
+        <div>
+          <div class="page-title" style="margin-bottom:5px;">Financial Calendar</div>
+          <div class="page-description">See upcoming bills, loan payments, savings deadlines and personal reminders in one place.</div>
+        </div>
+        <button class="btn btn-primary" onclick="focusReminderForm()">＋ Add Reminder</button>
+      </div>
+
+      <div class="grid-4 mb24">
+        <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value red" id="cal-overdue">0</div><div class="stat-sub">Needs attention</div></div>
+        <div class="stat-card"><div class="stat-label">Due in 7 Days</div><div class="stat-value yellow" id="cal-week">0</div><div class="stat-sub">Upcoming commitments</div></div>
+        <div class="stat-card"><div class="stat-label">Displayed Month</div><div class="stat-value accent" id="cal-month-count">0</div><div class="stat-sub">Scheduled items</div></div>
+        <div class="stat-card"><div class="stat-label">Completed Reminders</div><div class="stat-value green" id="cal-completed">0</div><div class="stat-sub">Custom reminders done</div></div>
+      </div>
+
+      <div class="card mb24" id="reminder-form-card">
+        <div class="section-title mb16">Add Custom Reminder</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Reminder</label><input id="rem-title" type="text" placeholder="e.g. Pay internet bill"/></div>
+          <div class="form-group"><label>Date</label><input id="rem-date" type="date"/></div>
+          <div class="form-group"><label>Type</label><select id="rem-type"><option value="bill">Bill</option><option value="loan">Loan Payment</option><option value="savings">Savings</option><option value="income">Expected Income</option><option value="other">Other</option></select></div>
+          <div class="form-group"><label>Amount (GYD, optional)</label><input id="rem-amount" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+          <div class="form-group"><label>Notes</label><input id="rem-notes" type="text" placeholder="Optional details"/></div>
+        </div>
+        <button class="btn btn-primary" onclick="addReminder()">Save Reminder</button>
+      </div>
+
+      <div class="calendar-layout mb24">
+        <div class="card calendar-card">
+          <div class="calendar-toolbar">
+            <button class="btn btn-ghost btn-sm" onclick="changeCalendarMonth(-1)">← Previous</button>
+            <div>
+              <div class="calendar-month-title" id="calendar-month-label">—</div>
+              <button class="calendar-today-link" onclick="goCalendarToday()">Return to current month</button>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="changeCalendarMonth(1)">Next →</button>
+          </div>
+          <div class="calendar-weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+          <div id="calendar-grid" class="calendar-grid"></div>
+        </div>
+
+        <div class="card agenda-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title" id="agenda-title">Upcoming Schedule</div>
+              <div class="page-description" id="agenda-subtitle">Next financial dates</div>
+            </div>
+          </div>
+          <div id="calendar-agenda"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Custom Reminders</div>
+          <span style="font-size:0.76rem;color:var(--muted);">Mark completed, edit or remove reminders</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Reminder</th><th>Type</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="reminders-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MONTHLY REPORTS ===== -->
+    <div id="page-reports" class="page">
+      <div class="feature-title-row report-controls">
+        <div>
+          <div class="page-title" style="margin-bottom:5px;">Monthly Reports</div>
+          <div class="page-description">A consolidated monthly view of income, spending, cash flow, business performance and outstanding commitments.</div>
+        </div>
+        <div class="report-actions">
+          <input type="month" id="report-month" onchange="renderReports()"/>
+          <button class="btn btn-primary" onclick="printMonthlyReport()">🖨️ Print / Save PDF</button>
+        </div>
+      </div>
+
+      <div id="print-report-header" class="print-report-header">
+        <div><strong>FinTrack Monthly Financial Report</strong></div>
+        <div id="print-report-period">—</div>
+      </div>
+
+      <div class="grid-4 mb24">
+        <div class="stat-card"><div class="stat-label">Monthly Income</div><div class="stat-value green" id="report-income">GYD $0</div><div class="stat-sub">Income records received</div></div>
+        <div class="stat-card"><div class="stat-label">Paid Expenses</div><div class="stat-value red" id="report-expenses">GYD $0</div><div class="stat-sub">Expenses paid this month</div></div>
+        <div class="stat-card"><div class="stat-label">Net Cash Flow</div><div class="stat-value" id="report-cashflow">GYD $0</div><div class="stat-sub">Income minus paid expenses</div></div>
+        <div class="stat-card"><div class="stat-label">Closing Liquid Funds</div><div class="stat-value accent" id="report-closing">GYD $0</div><div class="stat-sub">Bank plus cash at month end</div></div>
+      </div>
+
+      <div class="report-metrics mb24">
+        <div class="report-metric"><span>Opening Bank</span><strong id="report-opening-bank">GYD $0</strong></div>
+        <div class="report-metric"><span>Closing Bank</span><strong id="report-closing-bank">GYD $0</strong></div>
+        <div class="report-metric"><span>Opening Cash</span><strong id="report-opening-cash">GYD $0</strong></div>
+        <div class="report-metric"><span>Closing Cash</span><strong id="report-closing-cash">GYD $0</strong></div>
+        <div class="report-metric"><span>Business Result</span><strong id="report-business">GYD $0</strong></div>
+        <div class="report-metric"><span>Sales Profit</span><strong id="report-sales-profit">GYD $0</strong></div>
+        <div class="report-metric"><span>Savings Contributions</span><strong id="report-savings">GYD $0</strong></div>
+        <div class="report-metric"><span>Currently Unpaid Due by Month End</span><strong id="report-unpaid">GYD $0</strong></div>
+      </div>
+
+      <div class="grid-2 mb24">
+        <div class="card">
+          <div class="section-header"><div class="section-title">Monthly Financial Movement</div></div>
+          <div class="chart-box"><canvas id="chart-report"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="section-header"><div class="section-title">Expense Breakdown</div></div>
+          <div id="report-category-breakdown"></div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb24">
+        <div class="card">
+          <div class="section-header"><div class="section-title">Outstanding Loans</div></div>
+          <div id="report-loans"></div>
+        </div>
+        <div class="card">
+          <div class="section-header"><div class="section-title">Savings Position</div></div>
+          <div id="report-savings-position"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header"><div class="section-title">Monthly Transaction Detail</div><span id="report-transaction-count" style="font-size:0.76rem;color:var(--muted);"></span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Area</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead>
+            <tbody id="report-transactions"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ACTIVITY HISTORY ===== -->
+    <div id="page-activity" class="page">
+      <div class="feature-title-row">
+        <div>
+          <div class="page-title" style="margin-bottom:5px;">Activity History</div>
+          <div class="page-description">A timestamped audit trail of additions, edits, deletions and restored records.</div>
+        </div>
+        <button class="btn btn-ghost" onclick="refreshActivityHistory()">↻ Refresh</button>
+      </div>
+
+      <div class="grid-4 mb24">
+        <div class="stat-card"><div class="stat-label">Total Activity</div><div class="stat-value accent" id="act-total">0</div></div>
+        <div class="stat-card"><div class="stat-label">Today</div><div class="stat-value green" id="act-today">0</div></div>
+        <div class="stat-card"><div class="stat-label">Deleted Recoverable</div><div class="stat-value yellow" id="act-undoable">0</div></div>
+        <div class="stat-card"><div class="stat-label">Last Updated By</div><div class="activity-user-stat" id="act-last-user">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="activity-toolbar">
+          <select id="activity-action-filter" onchange="renderActivityHistory()"><option value="all">All actions</option><option value="add">Added</option><option value="edit">Edited</option><option value="delete">Deleted</option><option value="restore">Restored</option></select>
+          <select id="activity-area-filter" onchange="renderActivityHistory()"><option value="all">All areas</option></select>
+          <input id="activity-search" type="text" placeholder="🔍 Search activity..." oninput="renderActivityHistory()"/>
+        </div>
+        <div class="activity-note">Deleted records remain recoverable from this page. Linked Bank or Cash entries are also restored when a matching deleted record is available. Tracking begins when this updated version is first used.</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date & Time</th><th>User</th><th>Action</th><th>Area</th><th>Record</th><th>Changes</th><th>Recovery</th></tr></thead>
+            <tbody id="activity-table"></tbody>
           </table>
         </div>
       </div>
@@ -1429,7 +1705,7 @@
         <div class="modal-icon" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.25);">🗑️</div>
         <div>
           <div class="modal-title" id="confirm-modal-title">Delete record?</div>
-          <div class="modal-subtitle">This action cannot be undone.</div>
+          <div class="modal-subtitle">Deleted records can be restored from Activity History.</div>
         </div>
       </div>
       <button class="modal-close" type="button" onclick="resolveConfirm(false)" aria-label="Close">✕</button>
@@ -1439,7 +1715,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" type="button" onclick="resolveConfirm(false)">Keep Record</button>
-      <button class="btn btn-danger" type="button" id="confirm-modal-submit" onclick="resolveConfirm(true)">Delete Permanently</button>
+      <button class="btn btn-danger" type="button" id="confirm-modal-submit" onclick="resolveConfirm(true)">Delete Record</button>
     </div>
   </div>
 </div>
@@ -1520,7 +1796,11 @@ const today = () => new Date().toISOString().slice(0,10);
 
 // State
 let bankData = [], incomeData = [], expenseData = [], loanData = [], savingsData = [], bizData = [], salesData = [], cashData = [];
-let goalContributionsData = [], budgetData = [];
+let goalContributionsData = [], budgetData = [], reminderData = [], activityData = [];
+let lastUndoActivityId = null;
+let calendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let selectedCalendarDate = null;
+let reportChart = null;
 let bankFilter = 'all', expFilter = 'all', bizFilter = 'all', salesFilter = 'all';
 let expenseStatusFilter = 'all';
 const tablePages = {};
@@ -1537,7 +1817,8 @@ function userPath(col) {
 function clearAllData() {
   bankData = []; incomeData = []; expenseData = []; loanData = [];
   savingsData = []; bizData = []; salesData = []; cashData = [];
-  goalContributionsData = []; budgetData = [];
+  goalContributionsData = []; budgetData = []; reminderData = []; activityData = [];
+  lastUndoActivityId = null;
 }
 
 function showLogin() {
@@ -1569,44 +1850,116 @@ authFns.onAuthStateChanged(auth, (user) => {
 
 // Set default dates
 document.querySelectorAll('input[type="date"]').forEach(el => el.value = today());
+const reportMonthInput = document.getElementById('report-month');
+if (reportMonthInput) reportMonthInput.value = today().slice(0,7);
 
 // ---- NAVIGATION ----
-document.querySelectorAll('.nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    item.classList.add('active');
-    document.getElementById('page-' + item.dataset.page).classList.add('active');
-    if (item.dataset.page === 'dashboard') renderDashboard();
-  });
-});
+function openPage(page) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if (!target) return;
+  target.classList.add('active');
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'calendar') renderCalendar();
+  if (page === 'reports') renderReports();
+  if (page === 'activity') renderActivityHistory();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+window.openPage = openPage;
+document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => openPage(item.dataset.page)));
 
 // ---- TOAST ----
-function toast(msg, type='success') {
+function toast(msg, type='success', action=null) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
+  el.replaceChildren();
+  const copy = document.createElement('span');
+  copy.textContent = msg;
+  el.appendChild(copy);
+  const undoId = action?.activityId || ((/deleted|removed/i.test(msg) && lastUndoActivityId) ? lastUndoActivityId : null);
+  if (undoId) {
+    const btn = document.createElement('button');
+    btn.className = 'toast-action';
+    btn.textContent = action?.label || 'Undo';
+    btn.onclick = () => undoActivity(undoId);
+    el.appendChild(btn);
+  }
   el.className = 'show ' + type;
-  setTimeout(() => el.className = '', 2800);
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.className = '', undoId ? 7000 : 2800);
 }
 
-// ---- REALTIME DATABASE HELPERS ----
+const COLLECTION_LABELS = {
+  bankTransactions:'Bank', cashTransactions:'Cash', income:'Income', expenses:'Expenses', loans:'Loans',
+  savings:'Savings', goalContributions:'Savings Contributions', business:'Business', sales:'Sales',
+  momTransactions:"Mom's Money", budgets:'Budgets', reminders:'Reminders'
+};
+const MONEY_KEYS = new Set(['amount','paidBack','installment','target','saved','monthly','limit','totalSell','totalCost','totalProfit','depositToBank']);
+function cloneSafe(value) {
+  if (value == null) return value;
+  return JSON.parse(JSON.stringify(value));
+}
+function recordTitle(col, data={}) {
+  return data.title || data.name || data.person || data.source || data.desc || data.category || data.notes || COLLECTION_LABELS[col] || 'Record';
+}
+function currentUserLabel() {
+  const email = currentUser?.email || 'Unknown user';
+  const name = email.split('@')[0] || email;
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+async function logActivity(action, col, recordId, before=null, after=null, description='') {
+  if (!currentUser || col === 'activityLog') return null;
+  const at = Date.now();
+  const source = after || before || {};
+  const entry = {
+    action, collection:col, recordId, before:cloneSafe(before), after:cloneSafe(after),
+    title:recordTitle(col, source), description,
+    undoable:action==='delete', undone:false, at,
+    userEmail:currentUser.email || '', userName:currentUserLabel()
+  };
+  try {
+    const newRef = await fs.push(fs.ref(db, userPath('activityLog')), entry);
+    const local = {id:newRef.key, ...entry};
+    activityData.unshift(local);
+    activityData.sort((a,b)=>(b.at||0)-(a.at||0));
+    if (action === 'delete') { lastUndoActivityId = newRef.key; }
+    if (document.getElementById('page-activity')?.classList.contains('active')) renderActivityHistory();
+    return newRef.key;
+  } catch(e) {
+    console.warn('Activity log could not be saved', e);
+    return null;
+  }
+}
+
+// ---- REALTIME DATABASE HELPERS + AUDIT TRAIL ----
 async function save(col, data) {
   if (!currentUser) { toast('Not logged in', 'error'); return; }
   try {
-    const newRef = await fs.push(fs.ref(db, userPath(col)), {...data, createdAt: Date.now()});
+    const stored = {...data, createdAt: Date.now()};
+    const newRef = await fs.push(fs.ref(db, userPath(col)), stored);
+    await logActivity('add', col, newRef.key, null, stored);
     return newRef.key;
   } catch(e) { toast('Error saving: ' + e.message, 'error'); }
 }
 async function remove(col, id) {
   if (!currentUser) { toast('Not logged in', 'error'); return; }
   try {
-    await fs.remove(fs.ref(db, userPath(col) + '/' + id));
+    const targetRef = fs.ref(db, userPath(col) + '/' + id);
+    const snap = await fs.get(targetRef);
+    const before = snap.exists() ? snap.val() : null;
+    await fs.remove(targetRef);
+    return await logActivity('delete', col, id, before, null);
   } catch(e) { toast('Error deleting: ' + e.message, 'error'); }
 }
 async function update(col, id, data) {
   if (!currentUser) { toast('Not logged in', 'error'); return; }
   try {
-    await fs.update(fs.ref(db, userPath(col) + '/' + id), data);
+    const targetRef = fs.ref(db, userPath(col) + '/' + id);
+    const snap = await fs.get(targetRef);
+    const before = snap.exists() ? snap.val() : {};
+    await fs.update(targetRef, data);
+    const after = {...before, ...cloneSafe(data), updatedAt:Date.now()};
+    await logActivity('edit', col, id, before, after);
   } catch(e) { toast('Error updating: ' + e.message, 'error'); }
 }
 async function loadCol(col) {
@@ -1626,12 +1979,15 @@ async function loadAll() {
     loadCol('loans'), loadCol('savings'), loadCol('business'), loadCol('sales'),
     loadCol('cashTransactions'), loadCol('momTransactions')
   ]);
-  [goalContributionsData, budgetData] = await Promise.all([loadCol('goalContributions'), loadCol('budgets')]);
+  [goalContributionsData, budgetData, reminderData, activityData] = await Promise.all([
+    loadCol('goalContributions'), loadCol('budgets'), loadCol('reminders'), loadCol('activityLog')
+  ]);
+  activityData.sort((a,b)=>(b.at||b.createdAt||0)-(a.at||a.createdAt||0));
   momMoney = momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)
            - momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
   await processAutomaticLoanPayments();
   renderBank(); renderCash(); renderIncome(); renderExpenses(); renderLoans(); renderSavings(); renderBusiness();
-  renderSales(); renderMom(); renderBudgets();
+  renderSales(); renderMom(); renderBudgets(); renderCalendar(); renderReports(); renderActivityHistory();
   renderDashboard();
 }
 
@@ -1968,7 +2324,7 @@ window.addBank = async function() {
 };
 
 window.deleteBank = async function(id) {
-  if (!(await confirmAction({title:'Delete bank transaction?', message:'This transaction will be permanently removed from the Bank ledger.'}))) return;
+  if (!(await confirmAction({title:'Delete bank transaction?', message:'This transaction will be removed from the Bank ledger and can be restored from Activity History.'}))) return;
   await remove('bankTransactions', id);
   bankData = bankData.filter(x => x.id !== id);
   renderBank(); renderDashboard();
@@ -2173,7 +2529,7 @@ window.addExpense = async function() {
   toast('Expense added ✓' + (paid==='paid' ? sourceLabel : ''));
 };
 window.deleteExpense = async function(id) {
-  if (!(await confirmAction({title:'Delete expense?', message:'The expense and its linked Bank or Cash withdrawal will be permanently removed.'}))) return;
+  if (!(await confirmAction({title:'Delete expense?', message:'The expense and its linked Bank or Cash withdrawal will be removed. Matching deleted records can be restored from Activity History.'}))) return;
   const exp = expenseData.find(x => x.id === id);
   if (exp && exp.bankTxnId) await deleteLinkedBankTxn(exp.bankTxnId);
   if (exp && exp.cashTxnId) {
@@ -2469,7 +2825,7 @@ window.addLoan = async function() {
   toast('Loan recorded ✓');
 };
 window.deleteLoan = async function(id) {
-  if (!(await confirmAction({title:'Delete loan?', message:'The loan record and repayment progress will be permanently removed.'}))) return;
+  if (!(await confirmAction({title:'Delete loan?', message:'The loan record and repayment progress will be removed and can be restored from Activity History.'}))) return;
   await remove('loans', id);
   loanData = loanData.filter(x => x.id !== id);
   renderLoans(); renderDashboard();
@@ -2630,7 +2986,7 @@ window.addBusiness = async function() {
   toast('Entry added ✓');
 };
 window.deleteBusiness = async function(id) {
-  if (!(await confirmAction({title:'Delete business entry?', message:'This revenue or cost entry will be permanently removed.'}))) return;
+  if (!(await confirmAction({title:'Delete business entry?', message:'This revenue or cost entry will be removed and can be restored from Activity History.'}))) return;
   await remove('business', id);
   bizData = bizData.filter(x => x.id !== id);
   renderBusiness();
@@ -2705,7 +3061,7 @@ window.addCash = async function() {
 };
 
 window.deleteCash = async function(id) {
-  if (!(await confirmAction({title:'Delete cash entry?', message:'This entry will be permanently removed from the Cash in Hand ledger.'}))) return;
+  if (!(await confirmAction({title:'Delete cash entry?', message:'This entry will be removed from the Cash in Hand ledger and can be restored from Activity History.'}))) return;
   await remove('cashTransactions', id);
   cashData = cashData.filter(x => x.id !== id);
   renderCash(); renderDashboard();
@@ -2928,7 +3284,7 @@ window.saveBudget = async function() {
   renderBudgets(); renderDashboard();
 };
 window.deleteBudget = async function(id) {
-  if (!(await confirmAction({title:'Delete budget limit?', message:'This monthly category limit will be permanently removed.'}))) return;
+  if (!(await confirmAction({title:'Delete budget limit?', message:'This monthly category limit will be removed and can be restored from Activity History.'}))) return;
   await remove('budgets', id);
   budgetData = budgetData.filter(x => x.id !== id);
   renderBudgets(); renderDashboard();
@@ -2992,6 +3348,7 @@ function renderDashboard() {
   renderAllUnpaid();
   renderRecurringDue();
   renderBillsDue();
+  renderDashboardCalendar();
 
   // ---- Bank balance (deposits minus all withdrawals, including linked savings/expense txns) ----
   let bankBal = 0;
@@ -3154,6 +3511,226 @@ function renderDashboard() {
 
 // Auth functions are globally accessible via window.doLogin / window.doLogout
 
+
+// ======= FINANCIAL CALENDAR & REMINDERS =======
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+}
+function parseLocalDate(dateStr) {
+  if (!dateStr) return null;
+  const [y,m,d] = dateStr.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function dateKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+function daysBetween(fromStr, toStr) {
+  const a=parseLocalDate(fromStr), b=parseLocalDate(toStr);
+  return (!a||!b) ? 0 : Math.round((b-a)/86400000);
+}
+function calendarTypeLabel(type) {
+  return ({expense:'Expense',loan:'Loan',savings:'Savings',income:'Income',reminder:'Reminder',bill:'Bill',other:'Other'}[type] || type || 'Reminder');
+}
+function buildFinancialEvents() {
+  const events = [];
+  expenseData.forEach(x => {
+    const date = x.dueDate || x.date;
+    if (date) events.push({id:'expense-'+x.id,sourceId:x.id,date,type:'expense',title:x.desc||x.category||'Expense',amount:Number(x.amount||0),status:x.paid||'unpaid',source:'expenses'});
+  });
+  loanData.forEach(x => {
+    const remaining=Math.max(0,Number(x.amount||0)-Number(x.paidBack||0));
+    if (x.dueDate && remaining>0) events.push({id:'loan-'+x.id,sourceId:x.id,date:x.dueDate,type:'loan',title:(x.direction==='owe'?'Pay ':'Collect from ')+x.person,amount:x.installment||remaining,status:'open',source:'loans'});
+  });
+  savingsData.forEach(x => {
+    if (x.targetDate && Number(x.saved||0)<Number(x.target||0)) events.push({id:'savings-'+x.id,sourceId:x.id,date:x.targetDate,type:'savings',title:'Savings deadline: '+x.name,amount:Math.max(0,Number(x.target||0)-Number(x.saved||0)),status:'open',source:'savings'});
+  });
+  incomeData.forEach(x => {
+    if (x.date) events.push({id:'income-'+x.id,sourceId:x.id,date:x.date,type:'income',title:x.source||'Income',amount:Number(x.amount||0),status:'received',source:'income'});
+  });
+  reminderData.forEach(x => {
+    events.push({id:'reminder-'+x.id,sourceId:x.id,date:x.date,type:'reminder',subtype:x.type||'other',title:x.title||'Reminder',amount:Number(x.amount||0),status:x.completed?'completed':'open',notes:x.notes||'',source:'reminders'});
+  });
+  return events.filter(x=>x.date).sort((a,b)=>a.date.localeCompare(b.date));
+}
+function isActionableEvent(event) {
+  if (event.status==='completed' || event.status==='paid' || event.status==='received') return false;
+  return true;
+}
+window.focusReminderForm = function() {
+  document.getElementById('reminder-form-card')?.scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(()=>document.getElementById('rem-title')?.focus(),350);
+};
+window.addReminder = async function() {
+  const title=document.getElementById('rem-title').value.trim();
+  const date=document.getElementById('rem-date').value;
+  const type=document.getElementById('rem-type').value;
+  const amount=parseFloat(document.getElementById('rem-amount').value)||0;
+  const notes=document.getElementById('rem-notes').value.trim();
+  if(!title||!date){toast('Enter a reminder and date','error');return;}
+  const entry={title,date,type,amount,notes,completed:false};
+  const id=await save('reminders',entry); if(!id)return;
+  reminderData.push({id,...entry});
+  document.getElementById('rem-title').value='';document.getElementById('rem-amount').value='';document.getElementById('rem-notes').value='';
+  renderCalendar();renderDashboard();toast('Reminder added ✓');
+};
+window.toggleReminder = async function(id) {
+  const r=reminderData.find(x=>x.id===id);if(!r)return;
+  await update('reminders',id,{completed:!r.completed});
+  reminderData=reminderData.map(x=>x.id===id?{...x,completed:!r.completed}:x);
+  renderCalendar();renderDashboard();toast(r.completed?'Reminder reopened':'Reminder completed ✓');
+};
+window.deleteReminder = async function(id) {
+  if(!(await confirmAction({title:'Delete reminder?',message:'The reminder will be removed from your Financial Calendar, but it can be restored from Activity History.'})))return;
+  await remove('reminders',id); reminderData=reminderData.filter(x=>x.id!==id);
+  renderCalendar();renderDashboard();toast('Reminder deleted');
+};
+window.editReminder = function(id) {
+  const r=reminderData.find(x=>x.id===id);if(!r)return;
+  openFormModal({icon:'🗓️',title:'Edit Reminder',subtitle:'Update the reminder details shown on your Financial Calendar.',submitLabel:'Save Reminder',fields:[
+    {name:'title',label:'Reminder',type:'text',required:true,value:r.title||'',wide:true},
+    {name:'date',label:'Date',type:'date',required:true,value:r.date||today()},
+    {name:'type',label:'Type',type:'select',value:r.type||'other',options:[{value:'bill',label:'Bill'},{value:'loan',label:'Loan Payment'},{value:'savings',label:'Savings'},{value:'income',label:'Expected Income'},{value:'other',label:'Other'}]},
+    {name:'amount',label:'Amount (GYD)',type:'number',min:0,step:'0.01',value:r.amount||0},
+    {name:'notes',label:'Notes',type:'textarea',value:r.notes||'',wide:true,required:false}
+  ],onSubmit:async values=>{
+    const changes={title:String(values.title).trim(),date:values.date,type:values.type,amount:Number(values.amount)||0,notes:String(values.notes||'').trim()};
+    await update('reminders',id,changes);reminderData=reminderData.map(x=>x.id===id?{...x,...changes}:x);renderCalendar();renderDashboard();toast('Reminder updated ✓');
+  }});
+};
+window.changeCalendarMonth=function(delta){calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+delta,1);selectedCalendarDate=null;renderCalendar();};
+window.goCalendarToday=function(){const n=new Date();calendarCursor=new Date(n.getFullYear(),n.getMonth(),1);selectedCalendarDate=today();renderCalendar();};
+window.openDayAgenda=function(date){selectedCalendarDate=date;renderCalendar();};
+function renderCalendar() {
+  const grid=document.getElementById('calendar-grid');if(!grid)return;
+  if(!document.getElementById('rem-date').value)document.getElementById('rem-date').value=today();
+  const events=buildFinancialEvents();const todayStr=today();
+  const actionable=events.filter(isActionableEvent);
+  document.getElementById('cal-overdue').textContent=actionable.filter(e=>e.date<todayStr).length;
+  document.getElementById('cal-week').textContent=actionable.filter(e=>{const d=daysBetween(todayStr,e.date);return d>=0&&d<=7;}).length;
+  document.getElementById('cal-month-count').textContent=events.filter(e=>{const d=parseLocalDate(e.date);return d&&d.getFullYear()===calendarCursor.getFullYear()&&d.getMonth()===calendarCursor.getMonth();}).length;
+  document.getElementById('cal-completed').textContent=reminderData.filter(x=>x.completed).length;
+  document.getElementById('calendar-month-label').textContent=calendarCursor.toLocaleString('en-US',{month:'long',year:'numeric'});
+  const first=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth(),1);
+  const start=new Date(first);start.setDate(1-first.getDay());
+  let html='';
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);const key=dateKey(d);
+    const dayEvents=events.filter(e=>e.date===key);const outside=d.getMonth()!==calendarCursor.getMonth();
+    html+=`<div class="calendar-day ${outside?'outside':''} ${key===todayStr?'today':''} ${key===selectedCalendarDate?'selected':''}" onclick="openDayAgenda('${key}')"><div class="calendar-day-number">${d.getDate()}</div>${dayEvents.slice(0,3).map(e=>`<span class="calendar-event ${e.type} ${e.status==='completed'?'completed':''}" title="${escapeHtml(e.title)}">${escapeHtml(e.title)}</span>`).join('')}${dayEvents.length>3?`<span class="calendar-more">+${dayEvents.length-3} more</span>`:''}</div>`;
+  }
+  grid.innerHTML=html;
+  renderCalendarAgenda(events);
+  const sorted=[...reminderData].sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('reminders-table').innerHTML=sorted.map(r=>`<tr><td>${r.date}</td><td><div style="font-weight:650;${r.completed?'text-decoration:line-through;opacity:.55;':''}">${escapeHtml(r.title)}</div>${r.notes?`<div style="font-size:.72rem;color:var(--muted);margin-top:2px;">${escapeHtml(r.notes)}</div>`:''}</td><td><span class="badge badge-blue">${escapeHtml(calendarTypeLabel(r.type))}</span></td><td>${r.amount?fmt(r.amount):'—'}</td><td><button class="toggle-paid ${r.completed?'paid':'unpaid'}" onclick="toggleReminder('${r.id}')">${r.completed?'✓ Completed':'○ Open'}</button></td><td style="display:flex;gap:5px;"><button class="btn btn-ghost btn-xs" onclick="editReminder('${r.id}')">✏️ Edit</button><button class="btn btn-danger btn-xs" onclick="deleteReminder('${r.id}')">Del</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty"><div class="empty-icon">🗓️</div><div class="empty-text">No custom reminders yet</div></td></tr>';
+}
+function renderCalendarAgenda(events) {
+  const box=document.getElementById('calendar-agenda');if(!box)return;
+  const todayStr=today();let list;
+  if(selectedCalendarDate){list=events.filter(e=>e.date===selectedCalendarDate);document.getElementById('agenda-title').textContent='Schedule for '+parseLocalDate(selectedCalendarDate).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});document.getElementById('agenda-subtitle').textContent=list.length+' item'+(list.length===1?'':'s')+' scheduled';}
+  else{list=events.filter(e=>e.date>=todayStr&&isActionableEvent(e)).slice(0,12);document.getElementById('agenda-title').textContent='Upcoming Schedule';document.getElementById('agenda-subtitle').textContent='Next financial dates requiring attention';}
+  box.innerHTML=list.map(e=>`<div class="agenda-item"><span class="agenda-dot ${e.type}"></span><div class="agenda-main"><div class="agenda-title">${escapeHtml(e.title)}</div><div class="agenda-meta">${e.date} · ${escapeHtml(calendarTypeLabel(e.subtype||e.type))}${e.status==='paid'||e.status==='completed'?` · ${escapeHtml(e.status)}`:''}</div></div><div class="agenda-amount">${e.amount?fmt(e.amount):''}</div></div>`).join('')||'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Nothing scheduled here</div></div>';
+}
+function renderDashboardCalendar() {
+  const card=document.getElementById('dash-calendar-card');const box=document.getElementById('dash-calendar-events');if(!card||!box)return;
+  const todayStr=today();const list=buildFinancialEvents().filter(e=>isActionableEvent(e)&&e.date<=dateKey(new Date(Date.now()+30*86400000))).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
+  card.style.display=list.length?'':'none';
+  box.innerHTML=list.map(e=>{const diff=daysBetween(todayStr,e.date);const timing=diff<0?`${Math.abs(diff)} day${Math.abs(diff)===1?'':'s'} overdue`:diff===0?'Due today':`In ${diff} day${diff===1?'':'s'}`;return`<div class="agenda-item"><span class="agenda-dot ${e.type}"></span><div class="agenda-main"><div class="agenda-title">${escapeHtml(e.title)}</div><div class="agenda-meta">${e.date} · ${timing}</div></div><div class="agenda-amount">${e.amount?fmt(e.amount):''}</div></div>`;}).join('');
+}
+
+// ======= MONTHLY REPORT CENTRE =======
+function selectedReportRange() {
+  const input=document.getElementById('report-month');
+  if(!input.value)input.value=today().slice(0,7);
+  const [y,m]=input.value.split('-').map(Number);const start=`${y}-${String(m).padStart(2,'0')}-01`;const last=new Date(y,m,0).getDate();const end=`${y}-${String(m).padStart(2,'0')}-${String(last).padStart(2,'0')}`;
+  return {y,m:m-1,start,end,label:new Date(y,m-1,1).toLocaleString('en-US',{month:'long',year:'numeric'})};
+}
+function between(date,start,end){return Boolean(date&&date>=start&&date<=end);}
+function balanceAt(rows,endDate,inType,outType){return rows.filter(x=>x.date<=endDate).reduce((s,x)=>s+(x.type===inType?Number(x.amount||0):-Number(x.amount||0)),0);}
+function balanceBefore(rows,startDate,inType,outType){return rows.filter(x=>x.date<startDate).reduce((s,x)=>s+(x.type===inType?Number(x.amount||0):-Number(x.amount||0)),0);}
+function renderReports() {
+  const page=document.getElementById('page-reports');if(!page)return;
+  const r=selectedReportRange();document.getElementById('print-report-period').textContent=r.label;
+  const monthIncome=incomeData.filter(x=>between(x.date,r.start,r.end)).reduce((s,x)=>s+Number(x.amount||0),0);
+  const paidExpenses=expenseData.filter(x=>x.paid==='paid'&&between(x.date,r.start,r.end)).reduce((s,x)=>s+Number(x.amount||0),0);
+  const cashFlow=monthIncome-paidExpenses;
+  const openBank=balanceBefore(bankData,r.start,'deposit','withdrawal'),closeBank=balanceAt(bankData,r.end,'deposit','withdrawal');
+  const openCash=balanceBefore(cashData,r.start,'in','out'),closeCash=balanceAt(cashData,r.end,'in','out');
+  const bizRev=bizData.filter(x=>x.type==='revenue'&&between(x.date,r.start,r.end)).reduce((s,x)=>s+Number(x.amount||0),0);
+  const bizCost=bizData.filter(x=>x.type==='cost'&&between(x.date,r.start,r.end)).reduce((s,x)=>s+Number(x.amount||0),0);
+  const salesProfit=salesData.filter(x=>between(x.date,r.start,r.end)).reduce((s,x)=>s+Number(x.totalProfit||0),0);
+  const savingsContrib=goalContributionsData.filter(x=>between(x.date,r.start,r.end)).reduce((s,x)=>s+Number(x.amount||0),0);
+  const unpaidAtEnd=expenseData.filter(x=>x.paid==='unpaid'&&(x.dueDate||x.date)<=r.end).reduce((s,x)=>s+Number(x.amount||0),0);
+  const setMoney=(id,value,color)=>{const el=document.getElementById(id);el.textContent=fmt(value);if(color)el.style.color=value>=0?color:'var(--red)';};
+  setMoney('report-income',monthIncome);setMoney('report-expenses',paidExpenses);setMoney('report-cashflow',cashFlow,'var(--green)');setMoney('report-closing',closeBank+closeCash,'var(--accent)');
+  setMoney('report-opening-bank',openBank);setMoney('report-closing-bank',closeBank);setMoney('report-opening-cash',openCash);setMoney('report-closing-cash',closeCash);setMoney('report-business',bizRev-bizCost,'var(--green)');setMoney('report-sales-profit',salesProfit,'var(--green)');setMoney('report-savings',savingsContrib);setMoney('report-unpaid',unpaidAtEnd);
+  const cats={};expenseData.filter(x=>x.paid==='paid'&&between(x.date,r.start,r.end)).forEach(x=>cats[x.category||'Other']=(cats[x.category||'Other']||0)+Number(x.amount||0));
+  const catEntries=Object.entries(cats).sort((a,b)=>b[1]-a[1]);const maxCat=Math.max(...catEntries.map(x=>x[1]),1);
+  document.getElementById('report-category-breakdown').innerHTML=catEntries.map(([cat,val])=>`<div class="breakdown-row"><div class="breakdown-head"><span>${escapeHtml(cat)}</span><strong>${fmt(val)}</strong></div><div class="progress-bar"><div class="progress-fill" style="width:${(val/maxCat*100).toFixed(1)}%;"></div></div></div>`).join('')||'<div class="empty"><div class="empty-text">No paid expenses for this month</div></div>';
+  const owe=loanData.filter(x=>x.direction==='owe'&&Number(x.amount||0)>Number(x.paidBack||0));const lent=loanData.filter(x=>x.direction==='lent'&&Number(x.amount||0)>Number(x.paidBack||0));
+  document.getElementById('report-loans').innerHTML=[...owe,...lent].map(x=>{const rem=Number(x.amount||0)-Number(x.paidBack||0);return`<div class="report-list-row"><div><strong>${escapeHtml(x.person)}</strong><div style="color:var(--muted);font-size:.71rem;margin-top:2px;">${x.direction==='owe'?'You owe':'Owed to you'}${x.dueDate?' · Due '+x.dueDate:''}</div></div><strong style="color:${x.direction==='owe'?'var(--red)':'var(--green)'}">${fmt(rem)}</strong></div>`;}).join('')||'<div class="empty"><div class="empty-text">No outstanding loans</div></div>';
+  document.getElementById('report-savings-position').innerHTML=savingsData.map(x=>{const pct=x.target?Math.min(100,Number(x.saved||0)/Number(x.target)*100):0;return`<div class="breakdown-row"><div class="breakdown-head"><span>${escapeHtml(x.name)}</span><strong>${fmt(x.saved||0)} / ${fmt(x.target||0)}</strong></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;"></div></div></div>`;}).join('')||'<div class="empty"><div class="empty-text">No savings goals</div></div>';
+  const tx=[
+    ...incomeData.filter(x=>between(x.date,r.start,r.end)).map(x=>({date:x.date,area:'Income',desc:x.source,type:'Income',amount:x.amount,positive:true})),
+    ...expenseData.filter(x=>between(x.date,r.start,r.end)).map(x=>({date:x.date,area:'Expenses',desc:x.desc||x.category,type:x.paid==='paid'?'Paid':'Unpaid',amount:x.amount,positive:false})),
+    ...bizData.filter(x=>between(x.date,r.start,r.end)).map(x=>({date:x.date,area:'Business',desc:x.desc||x.category,type:x.type==='revenue'?'Revenue':'Cost',amount:x.amount,positive:x.type==='revenue'})),
+    ...salesData.filter(x=>between(x.date,r.start,r.end)).map(x=>({date:x.date,area:'Sales',desc:x.desc||'Sale',type:'Profit',amount:x.totalProfit,positive:Number(x.totalProfit||0)>=0}))
+  ].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('report-transaction-count').textContent=tx.length+' record'+(tx.length===1?'':'s');
+  document.getElementById('report-transactions').innerHTML=tx.map(x=>`<tr><td>${x.date}</td><td><span class="badge badge-blue">${x.area}</span></td><td>${escapeHtml(x.desc||'—')}</td><td>${x.type}</td><td style="font-weight:700;color:${x.positive?'var(--green)':'var(--red)'}">${x.positive?'+':'−'}${fmt(Math.abs(Number(x.amount||0)))}</td></tr>`).join('')||'<tr><td colspan="5" class="empty"><div class="empty-text">No records in this month</div></td></tr>';
+  if(reportChart)reportChart.destroy();const ctx=document.getElementById('chart-report').getContext('2d');reportChart=new Chart(ctx,{type:'bar',data:{labels:['Income','Paid expenses','Business revenue','Business costs','Sales profit','Savings'],datasets:[{label:r.label,data:[monthIncome,paidExpenses,bizRev,bizCost,salesProfit,savingsContrib],backgroundColor:['rgba(34,197,94,.75)','rgba(239,68,68,.75)','rgba(0,212,170,.65)','rgba(245,158,11,.7)','rgba(108,99,255,.72)','rgba(59,201,219,.7)'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7a8099'},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#7a8099',callback:v=>'GYD '+(v>=1000?(v/1000).toFixed(0)+'k':v)},grid:{color:'#252a3a'}}}}});
+}
+window.printMonthlyReport=function(){renderReports();window.print();};
+
+// ======= ACTIVITY HISTORY & UNDO =======
+function displayValue(key,value) {
+  if(value==null||value==='')return '—';
+  if(MONEY_KEYS.has(key)&&!Number.isNaN(Number(value)))return fmt(value);
+  if(typeof value==='boolean')return value?'Yes':'No';
+  if(typeof value==='object')return Array.isArray(value)?`${value.length} item${value.length===1?'':'s'}`:'Updated details';
+  return String(value);
+}
+function activityChangeSummary(entry) {
+  if(entry.action==='add')return 'Created a new record.';
+  if(entry.action==='delete')return 'Deleted record preserved for recovery.';
+  if(entry.action==='restore')return 'Restored the deleted record.';
+  const before=entry.before||{},after=entry.after||{};const ignore=new Set(['createdAt','updatedAt','bankTxnId','cashTxnId']);
+  const changed=[...new Set([...Object.keys(before),...Object.keys(after)])].filter(k=>!ignore.has(k)&&JSON.stringify(before[k])!==JSON.stringify(after[k]));
+  if(!changed.length)return 'System details updated.';
+  return changed.slice(0,4).map(k=>`<strong>${escapeHtml(k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()))}:</strong> ${escapeHtml(displayValue(k,before[k]))} → ${escapeHtml(displayValue(k,after[k]))}`).join('<br>')+(changed.length>4?`<br>+${changed.length-4} more change${changed.length-4===1?'':'s'}`:'');
+}
+function populateActivityAreas() {
+  const select=document.getElementById('activity-area-filter');if(!select)return;const current=select.value;
+  const areas=[...new Set(activityData.map(x=>x.collection).filter(Boolean))].sort();
+  select.innerHTML='<option value="all">All areas</option>'+areas.map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(COLLECTION_LABELS[a]||a)}</option>`).join('');
+  if(areas.includes(current))select.value=current;
+}
+function renderActivityHistory() {
+  const table=document.getElementById('activity-table');if(!table)return;
+  populateActivityAreas();const action=document.getElementById('activity-action-filter').value;const area=document.getElementById('activity-area-filter').value;const search=document.getElementById('activity-search').value.toLowerCase().trim();
+  const sorted=[...activityData].sort((a,b)=>(b.at||b.createdAt||0)-(a.at||a.createdAt||0));const todayStart=parseLocalDate(today()).getTime();
+  document.getElementById('act-total').textContent=sorted.length;document.getElementById('act-today').textContent=sorted.filter(x=>(x.at||x.createdAt||0)>=todayStart).length;document.getElementById('act-undoable').textContent=sorted.filter(x=>x.action==='delete'&&!x.undone).length;document.getElementById('act-last-user').textContent=sorted[0]?.userName||'—';
+  const filtered=sorted.filter(x=>(action==='all'||x.action===action)&&(area==='all'||x.collection===area)&&(!search||[x.title,x.description,x.userName,COLLECTION_LABELS[x.collection],x.collection].join(' ').toLowerCase().includes(search))).slice(0,150);
+  const actionMeta={add:['Added','badge-green'],edit:['Edited','badge-blue'],delete:['Deleted','badge-red'],restore:['Restored','badge-teal']};
+  table.innerHTML=filtered.map(x=>{const stamp=new Date(x.at||x.createdAt||Date.now());const meta=actionMeta[x.action]||[x.action,'badge-blue'];return`<tr><td><div style="font-weight:650;white-space:nowrap;">${stamp.toLocaleDateString('en-US')}</div><div style="font-size:.7rem;color:var(--muted);">${stamp.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'})}</div></td><td>${escapeHtml(x.userName||x.userEmail||'Unknown')}</td><td><span class="badge ${meta[1]}">${meta[0]}</span></td><td>${escapeHtml(COLLECTION_LABELS[x.collection]||x.collection||'—')}</td><td class="activity-record"><div class="activity-record-title">${escapeHtml(x.title||'Record')}</div><div class="activity-record-id">${escapeHtml(x.recordId||'')}</div></td><td><div class="activity-change">${activityChangeSummary(x)}</div></td><td>${x.action==='delete'?(x.undone?'<span class="badge badge-green">Restored</span>':`<button class="btn btn-success btn-xs" onclick="undoActivity('${x.id}')">↶ Undo</button>`):x.action==='restore'?'<span class="badge badge-teal">Recovered</span>':'—'}</td></tr>`;}).join('')||'<tr><td colspan="7" class="empty"><div class="empty-icon">🕘</div><div class="empty-text">No matching activity</div></td></tr>';
+}
+window.refreshActivityHistory=async function(){activityData=await loadCol('activityLog');activityData.sort((a,b)=>(b.at||0)-(a.at||0));renderActivityHistory();toast('Activity history refreshed ✓');};
+async function restoreDeletedEntry(entry) {
+  if(!entry?.before||!entry.collection||!entry.recordId)return false;
+  await fs.set(fs.ref(db,userPath(entry.collection)+'/'+entry.recordId),cloneSafe(entry.before));
+  await fs.update(fs.ref(db,userPath('activityLog')+'/'+entry.id),{undone:true,undoneAt:Date.now(),undoneBy:currentUserLabel()});
+  entry.undone=true;entry.undoneAt=Date.now();return true;
+}
+window.undoActivity=async function(id){
+  const entry=activityData.find(x=>x.id===id);if(!entry||entry.action!=='delete'||entry.undone){toast('This deletion is no longer available to undo','error');return;}
+  try{
+    await restoreDeletedEntry(entry);
+    const linkedIds=[entry.before?.bankTxnId,entry.before?.cashTxnId].filter(Boolean);
+    for(const linkedId of linkedIds){const linked=activityData.find(x=>x.action==='delete'&&!x.undone&&x.recordId===linkedId);if(linked)await restoreDeletedEntry(linked);}
+    await logActivity('restore',entry.collection,entry.recordId,null,entry.before,'Restored from Activity History');
+    lastUndoActivityId=null;await loadAll();openPage('activity');toast('Deleted record restored ✓');
+  }catch(e){toast('Could not restore: '+e.message,'error');}
+};
+
 // ======= SALES =======
 let saleItemRowId = 0;
 
@@ -3308,7 +3885,7 @@ window.saveSale = async function() {
 };
 
 window.deleteSale = async function(id) {
-  if (!(await confirmAction({title:'Delete sale?', message:'This sale and its item-level profit details will be permanently removed.'}))) return;
+  if (!(await confirmAction({title:'Delete sale?', message:'This sale and its item-level profit details will be removed and can be restored from Activity History.'}))) return;
   await remove('sales', id);
   salesData = salesData.filter(x => x.id !== id);
   renderSales();
@@ -3495,7 +4072,7 @@ window.handleModalBackdrop = function(event, type) {
   if (type === 'form') closeFormModal(); else resolveConfirm(false);
 };
 
-function confirmAction({title='Delete record?', message='This action cannot be undone.', confirmLabel='Delete Permanently'}) {
+function confirmAction({title='Delete record?', message='Deleted records can be restored from Activity History.', confirmLabel='Delete Record'}) {
   document.getElementById('confirm-modal-title').textContent = title;
   document.getElementById('confirm-modal-message').textContent = message;
   document.getElementById('confirm-modal-submit').textContent = confirmLabel;
