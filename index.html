@@ -305,6 +305,97 @@
   .page-btn:disabled { opacity:.4; cursor:not-allowed; }
   .page-info { color:var(--muted); font-size:.76rem; margin-right:6px; }
   .unpaid-highlight { background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(245,158,11,.05)); border-color:rgba(239,68,68,.28); }
+
+
+  /* Professional modal system */
+  body.modal-open { overflow: hidden; }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 5000;
+    align-items: center; justify-content: center; padding: 22px;
+    background: rgba(4, 6, 12, 0.78); backdrop-filter: blur(8px);
+  }
+  .modal-overlay.open { display: flex; animation: modalFadeIn .18s ease; }
+  .modal-panel {
+    width: min(760px, 100%); max-height: min(90vh, 860px); overflow: hidden;
+    display: flex; flex-direction: column; background: linear-gradient(180deg, #1d2232 0%, var(--card) 100%);
+    border: 1px solid rgba(122,128,153,.26); border-radius: 18px;
+    box-shadow: 0 26px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.02) inset;
+    animation: modalPopIn .22s cubic-bezier(.2,.8,.2,1);
+  }
+  .modal-panel.modal-sm { width: min(460px, 100%); }
+  .modal-header {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    padding: 21px 22px 18px; border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(108,99,255,.12), rgba(0,212,170,.04));
+  }
+  .modal-heading { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+  .modal-icon {
+    width: 40px; height: 40px; border-radius: 11px; flex: 0 0 auto;
+    display: grid; place-items: center; font-size: 1.05rem;
+    background: rgba(108,99,255,.16); border: 1px solid rgba(108,99,255,.28);
+  }
+  .modal-title { font-size: 1.08rem; font-weight: 750; color: var(--text); line-height: 1.3; }
+  .modal-subtitle { color: var(--muted); font-size: .79rem; line-height: 1.45; margin-top: 3px; }
+  .modal-close {
+    width: 34px; height: 34px; flex: 0 0 auto; border-radius: 9px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    cursor: pointer; font-size: 1rem; transition: .15s ease;
+  }
+  .modal-close:hover { color: var(--text); border-color: var(--muted); transform: translateY(-1px); }
+  .modal-body { padding: 22px; overflow-y: auto; }
+  .modal-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 15px; }
+  .modal-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .modal-field.wide { grid-column: 1 / -1; }
+  .modal-field label { display: flex; justify-content: space-between; gap: 8px; color: #a7adc0; font-weight: 600; }
+  .modal-field .field-optional { color: var(--muted); font-size: .68rem; font-weight: 500; text-transform: uppercase; letter-spacing: .35px; }
+  .modal-field input, .modal-field select, .modal-field textarea {
+    width: 100%; min-height: 42px; padding: 10px 12px; border-radius: 9px;
+    background: rgba(13,15,20,.72); border-color: #30364a;
+  }
+  .modal-field textarea { min-height: 92px; resize: vertical; }
+  .modal-field input:focus, .modal-field select:focus, .modal-field textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,99,255,.12);
+  }
+  .modal-helper { color: var(--muted); font-size: .72rem; line-height: 1.4; }
+  .modal-notice {
+    margin-bottom: 16px; padding: 11px 13px; border-radius: 9px;
+    color: #d5d8e2; font-size: .78rem; line-height: 1.45;
+    background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2); border-left: 3px solid var(--yellow);
+  }
+  .modal-error {
+    display: none; margin-bottom: 14px; padding: 10px 12px; border-radius: 8px;
+    color: #fecaca; font-size: .79rem; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.22);
+  }
+  .modal-error.show { display: block; }
+  .modal-footer {
+    display: flex; justify-content: flex-end; gap: 9px; padding: 16px 22px 20px;
+    border-top: 1px solid var(--border); background: rgba(13,15,20,.28);
+  }
+  .btn-modal-save { min-width: 132px; }
+  .btn:disabled { opacity: .6; cursor: not-allowed; transform: none !important; }
+  .confirm-copy { color: #c3c7d3; font-size: .89rem; line-height: 1.6; }
+  .confirm-highlight { color: var(--text); font-weight: 650; }
+  @keyframes modalFadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes modalPopIn { from { opacity:0; transform:translateY(12px) scale(.985); } to { opacity:1; transform:none; } }
+
+  /* Upgrade the sales popup to match the shared modal language */
+  #sale-modal-overlay { padding: 22px; background: rgba(4,6,12,.78) !important; backdrop-filter: blur(8px); z-index: 4900 !important; }
+  #sale-modal-overlay > div {
+    border-color: rgba(122,128,153,.26) !important; border-radius: 18px !important;
+    box-shadow: 0 26px 80px rgba(0,0,0,.55); background: linear-gradient(180deg,#1d2232,var(--card)) !important;
+  }
+
+  @media(max-width: 640px) {
+    .modal-overlay, #sale-modal-overlay { padding: 0; align-items: flex-end; }
+    .modal-panel { width: 100%; max-height: 94vh; border-radius: 18px 18px 0 0; }
+    .modal-form-grid { grid-template-columns: 1fr; }
+    .modal-field.wide { grid-column: auto; }
+    .modal-header { padding: 18px 16px 15px; }
+    .modal-body { padding: 18px 16px; }
+    .modal-footer { padding: 14px 16px 18px; }
+    #sale-modal-overlay > div { width:100% !important; max-height:94vh !important; border-radius:18px 18px 0 0 !important; padding:20px 16px !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -1302,12 +1393,63 @@
   </main>
 </div>
 
+
+<!-- ===== SHARED PROFESSIONAL EDIT MODAL ===== -->
+<div id="form-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="form-modal-title" onclick="handleModalBackdrop(event, 'form')">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <div class="modal-heading">
+        <div class="modal-icon" id="form-modal-icon">✏️</div>
+        <div>
+          <div class="modal-title" id="form-modal-title">Edit Record</div>
+          <div class="modal-subtitle" id="form-modal-subtitle">Update the details below.</div>
+        </div>
+      </div>
+      <button class="modal-close" type="button" onclick="closeFormModal()" aria-label="Close">✕</button>
+    </div>
+    <form id="form-modal-form" onsubmit="submitFormModal(event)">
+      <div class="modal-body">
+        <div id="form-modal-error" class="modal-error"></div>
+        <div id="form-modal-notice" class="modal-notice" style="display:none;"></div>
+        <div id="form-modal-fields" class="modal-form-grid"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" type="button" onclick="closeFormModal()">Cancel</button>
+        <button class="btn btn-primary btn-modal-save" type="submit" id="form-modal-submit">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== SHARED PROFESSIONAL CONFIRMATION MODAL ===== -->
+<div id="confirm-modal-overlay" class="modal-overlay" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-title" onclick="handleModalBackdrop(event, 'confirm')">
+  <div class="modal-panel modal-sm">
+    <div class="modal-header">
+      <div class="modal-heading">
+        <div class="modal-icon" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.25);">🗑️</div>
+        <div>
+          <div class="modal-title" id="confirm-modal-title">Delete record?</div>
+          <div class="modal-subtitle">This action cannot be undone.</div>
+        </div>
+      </div>
+      <button class="modal-close" type="button" onclick="resolveConfirm(false)" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="confirm-modal-message" class="confirm-copy"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" type="button" onclick="resolveConfirm(false)">Keep Record</button>
+      <button class="btn btn-danger" type="button" id="confirm-modal-submit" onclick="resolveConfirm(true)">Delete Permanently</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== SALE MODAL ===== -->
 <div id="sale-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;width:min(820px,96vw);max-height:92vh;overflow-y:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <div style="font-size:1.2rem;font-weight:700;">New Sale / Transaction</div>
-      <button class="btn btn-ghost btn-sm" onclick="closeSaleModal()">✕ Close</button>
+      <div><div class="modal-title" id="sale-modal-title">New Sale / Transaction</div><div class="modal-subtitle">Record item-level cost, selling price, and profit.</div></div>
+      <button class="modal-close" type="button" onclick="closeSaleModal()" aria-label="Close">✕</button>
     </div>
 
     <!-- LIVE SUMMARY BAR (top) -->
@@ -1538,7 +1680,7 @@ window.addMomTxn = async function() {
 };
 
 window.deleteMomTxn = async function(id) {
-  if (!confirm('Delete this entry?')) return;
+  if (!(await confirmAction({title:'Delete Mom’s transaction?', message:'This removes the transaction from Mom’s Money. Any related Bank or Cash ledger entry remains unchanged.'}))) return;
   await remove('momTransactions', id);
   momTxnData = momTxnData.filter(x => x.id !== id);
   momMoney = momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)
@@ -1826,7 +1968,7 @@ window.addBank = async function() {
 };
 
 window.deleteBank = async function(id) {
-  if (!confirm('Delete this transaction?')) return;
+  if (!(await confirmAction({title:'Delete bank transaction?', message:'This transaction will be permanently removed from the Bank ledger.'}))) return;
   await remove('bankTransactions', id);
   bankData = bankData.filter(x => x.id !== id);
   renderBank(); renderDashboard();
@@ -1883,9 +2025,9 @@ function renderBank() {
         <button class="btn btn-ghost btn-xs" onclick="duplicateBank('${r.id}')" title="Duplicate">📋</button>
         ${r.auto
           ? '<span style="color:var(--muted);font-size:0.72rem;">linked</span>'
-          : '<button class="btn btn-ghost btn-xs" onclick="toggleEdit(\'bank\',\''+r.id+'\')">✏️</button><button class="btn btn-danger btn-xs" onclick="deleteBank(\''+r.id+'\')">Del</button>'}
+          : '<button class="btn btn-ghost btn-xs" onclick="editBankModal(\''+r.id+'\')">✏️</button><button class="btn btn-danger btn-xs" onclick="deleteBank(\''+r.id+'\')">Del</button>'}
       </td>
-    </tr>` + bankEditRow(r)).join('');
+    </tr>`).join('');
   document.getElementById('bank-table').innerHTML = rows || '<tr><td colspan="8" class="empty"><div class="empty-icon">🏦</div><div class="empty-text">No transactions yet</div></td></tr>';
   paginateTable('bank-table','bank');
 }
@@ -1942,7 +2084,7 @@ window.addIncome = async function() {
   toast('Income logged ✓');
 };
 window.deleteIncome = async function(id) {
-  if (!confirm('Delete?')) return;
+  if (!(await confirmAction({title:'Delete income record?', message:'The income record will be removed. Related Bank or Cash entries are not changed automatically.'}))) return;
   await remove('income', id);
   incomeData = incomeData.filter(x => x.id !== id);
   renderIncome(); renderDashboard();
@@ -1986,10 +2128,10 @@ function renderIncome() {
       <td style="color:var(--muted)">${r.notes||'—'}</td>
       <td style="display:flex;gap:4px;">
         <button class="btn btn-ghost btn-xs" onclick="duplicateIncome('${r.id}')" title="Duplicate">📋</button>
-        <button class="btn btn-ghost btn-xs" onclick="toggleEdit('inc','${r.id}')">✏️</button>
+        <button class="btn btn-ghost btn-xs" onclick="editIncomeModal('${r.id}')">✏️</button>
         <button class="btn btn-danger btn-xs" onclick="deleteIncome('${r.id}')">Del</button>
       </td>
-    </tr>` + incomeEditRow(r);
+    </tr>`;
   }).join('') || '<tr><td colspan="7" class="empty"><div class="empty-icon">💰</div><div class="empty-text">No income logged yet</div></td></tr>';
 }
 
@@ -2031,7 +2173,7 @@ window.addExpense = async function() {
   toast('Expense added ✓' + (paid==='paid' ? sourceLabel : ''));
 };
 window.deleteExpense = async function(id) {
-  if (!confirm('Delete? This will also remove its linked bank/cash withdrawal, if any.')) return;
+  if (!(await confirmAction({title:'Delete expense?', message:'The expense and its linked Bank or Cash withdrawal will be permanently removed.'}))) return;
   const exp = expenseData.find(x => x.id === id);
   if (exp && exp.bankTxnId) await deleteLinkedBankTxn(exp.bankTxnId);
   if (exp && exp.cashTxnId) {
@@ -2229,10 +2371,10 @@ function renderExpenses() {
       </td>
       <td style="display:flex;gap:4px;">
         <button class="btn btn-ghost btn-xs" onclick="duplicateExpense('${r.id}')" title="Duplicate">📋</button>
-        <button class="btn btn-ghost btn-xs" onclick="toggleEdit('exp','${r.id}')">✏️</button>
+        <button class="btn btn-ghost btn-xs" onclick="editExpenseModal('${r.id}')">✏️</button>
         <button class="btn btn-danger btn-xs" onclick="deleteExpense('${r.id}')">Del</button>
       </td>
-    </tr>` + expenseEditRow(r);
+    </tr>`;
   }).join('') || '<tr><td colspan="9" class="empty"><div class="empty-icon">🧾</div><div class="empty-text">No expenses yet</div></td></tr>';
   renderBudgets();
   paginateTable('expense-table','expenses');
@@ -2327,19 +2469,31 @@ window.addLoan = async function() {
   toast('Loan recorded ✓');
 };
 window.deleteLoan = async function(id) {
-  if (!confirm('Delete?')) return;
+  if (!(await confirmAction({title:'Delete loan?', message:'The loan record and repayment progress will be permanently removed.'}))) return;
   await remove('loans', id);
   loanData = loanData.filter(x => x.id !== id);
   renderLoans(); renderDashboard();
   toast('Deleted');
 };
-window.updateLoanPayment = async function(id) {
-  const newPaid = parseFloat(prompt('Enter updated amount paid back (GYD):') || 0);
-  if (isNaN(newPaid)) return;
-  await update('loans', id, {paidBack: newPaid});
-  loanData = loanData.map(x => x.id===id ? {...x, paidBack: newPaid} : x);
-  renderLoans(); renderDashboard();
-  toast('Updated ✓');
+window.updateLoanPayment = function(id) {
+  const r = loanData.find(x => x.id === id); if (!r) return;
+  openFormModal({
+    icon: '💳', title: 'Update Loan Payment',
+    subtitle: `Record the total amount paid back to date for ${r.person}.`,
+    submitLabel: 'Update Payment',
+    fields: [
+      {name:'paidBack', label:'Amount Paid Back (GYD)', type:'number', min:0, step:'0.01', required:true, value:r.paidBack||0, wide:true, helper:`Original loan: ${fmt(r.amount)} · Remaining: ${fmt(Math.max(0,r.amount-(r.paidBack||0)))}`}
+    ],
+    onSubmit: async values => {
+      const newPaid = Number(values.paidBack);
+      if (newPaid > Number(r.amount||0)) { showModalError('Paid back amount cannot exceed the original loan amount.'); return false; }
+      const paidOff = newPaid >= Number(r.amount||0);
+      const paymentChanges = {paidBack:newPaid, ...(paidOff ? {autoPay:false,dueDate:''} : {})};
+      await update('loans', id, paymentChanges);
+      loanData = loanData.map(x => x.id===id ? {...x, ...paymentChanges} : x);
+      renderLoans(); renderDashboard(); toast('Payment updated ✓');
+    }
+  });
 };
 function renderLoans() {
   const active = loanData.filter(x => (x.amount - (x.paidBack||0)) > 0);
@@ -2395,7 +2549,7 @@ window.addSavings = async function() {
   toast('Goal created ✓' + (saved>0 ? ' (deducted from Bank)' : ''));
 };
 window.deleteSavings = async function(id) {
-  if (!confirm('Delete goal? This will also return its linked amount to the Bank balance.')) return;
+  if (!(await confirmAction({title:'Delete savings goal?', message:'The goal will be removed and its linked savings withdrawal will be returned to the Bank balance.'}))) return;
   const goal = savingsData.find(x => x.id === id);
   if (goal && goal.bankTxnId) await deleteLinkedBankTxn(goal.bankTxnId);
   await remove('savings', id);
@@ -2403,38 +2557,7 @@ window.deleteSavings = async function(id) {
   renderSavings(); renderBank(); renderDashboard();
   toast('Deleted');
 };
-window.editSavings = function(id) {
-  const form = document.getElementById('sgedit-' + id);
-  if (!form) return;
-  form.style.display = form.style.display === 'none' ? 'block' : 'none';
-};
-window.saveEditSavings = async function(id) {
-  const goal = savingsData.find(x => x.id === id);
-  if (!goal) return;
-  const name    = document.getElementById('sge-name-'   + id).value.trim();
-  const target  = parseFloat(document.getElementById('sge-target-' + id).value || 0);
-  const newSaved= parseFloat(document.getElementById('sge-saved-'  + id).value || 0);
-  const monthly = parseFloat(document.getElementById('sge-monthly-'+ id).value || 0);
-  const date    = document.getElementById('sge-date-'   + id).value;
-  const notes   = document.getElementById('sge-notes-'  + id).value.trim();
-  if (!name || !target) { toast('Goal name and target are required', 'error'); return; }
-
-  // Adjust linked bank transaction if saved amount changed
-  let bankTxnId = goal.bankTxnId || null;
-  if (newSaved <= 0) {
-    if (bankTxnId) { await deleteLinkedBankTxn(bankTxnId); bankTxnId = null; }
-  } else if (bankTxnId) {
-    await updateLinkedBankTxn(bankTxnId, newSaved);
-  } else {
-    bankTxnId = await createLinkedBankTxn({ amount: newSaved, desc: 'Savings: ' + name, category: 'Savings Transfer', date: date || today(), linkType: 'savings', linkId: id });
-  }
-
-  const updated = { name, target, saved: newSaved, monthly, targetDate: date, notes, bankTxnId };
-  await update('savings', id, updated);
-  savingsData = savingsData.map(x => x.id === id ? { ...x, ...updated } : x);
-  renderSavings(); renderBank(); renderDashboard();
-  toast('Goal updated ✓');
-};
+window.editSavings = function(id) { editSavingsModal(id); };
 function renderSavings() {
   const total = savingsData.reduce((s,x)=>s+(x.saved||0),0);
   const goal = savingsData.reduce((s,x)=>s+(x.target||0),0);
@@ -2475,40 +2598,6 @@ function renderSavings() {
         <div class="progress-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':'var(--accent)'}"></div>
       </div>
       <div style="text-align:right;font-size:0.78rem;color:var(--muted);margin-top:4px">${pct.toFixed(1)}% complete</div>
-      <!-- INLINE EDIT FORM -->
-      <div id="sgedit-${r.id}" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
-        <div style="font-size:0.82rem;font-weight:600;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">Edit Goal</div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Goal Name</label>
-            <input type="text" id="sge-name-${r.id}" value="${r.name.replace(/"/g,'&quot;')}"/>
-          </div>
-          <div class="form-group">
-            <label>Target Amount (GYD)</label>
-            <input type="number" id="sge-target-${r.id}" value="${r.target}"/>
-          </div>
-          <div class="form-group">
-            <label>Amount Saved (GYD)</label>
-            <input type="number" id="sge-saved-${r.id}" value="${r.saved||0}"/>
-          </div>
-          <div class="form-group">
-            <label>Monthly Contribution (GYD)</label>
-            <input type="number" id="sge-monthly-${r.id}" value="${r.monthly||0}"/>
-          </div>
-          <div class="form-group">
-            <label>Target Date (optional)</label>
-            <input type="date" id="sge-date-${r.id}" value="${r.targetDate||''}"/>
-          </div>
-          <div class="form-group">
-            <label>Notes</label>
-            <input type="text" id="sge-notes-${r.id}" value="${(r.notes||'').replace(/"/g,'&quot;')}"/>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:4px;">
-          <button class="btn btn-primary btn-sm" onclick="saveEditSavings('${r.id}')">Save Changes</button>
-          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sgedit-${r.id}').style.display='none'">Cancel</button>
-        </div>
-      </div>
       <!-- CONTRIBUTION PANEL -->
       <div id="sgcontrib-${r.id}" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
         <div style="font-size:0.82rem;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">💰 Log Contribution</div>
@@ -2541,7 +2630,7 @@ window.addBusiness = async function() {
   toast('Entry added ✓');
 };
 window.deleteBusiness = async function(id) {
-  if (!confirm('Delete?')) return;
+  if (!(await confirmAction({title:'Delete business entry?', message:'This revenue or cost entry will be permanently removed.'}))) return;
   await remove('business', id);
   bizData = bizData.filter(x => x.id !== id);
   renderBusiness();
@@ -2616,7 +2705,7 @@ window.addCash = async function() {
 };
 
 window.deleteCash = async function(id) {
-  if (!confirm('Delete this cash entry?')) return;
+  if (!(await confirmAction({title:'Delete cash entry?', message:'This entry will be permanently removed from the Cash in Hand ledger.'}))) return;
   await remove('cashTransactions', id);
   cashData = cashData.filter(x => x.id !== id);
   renderCash(); renderDashboard();
@@ -2752,125 +2841,7 @@ function renderBillsDue() {
   el.innerHTML = rows.join('');
 }
 
-// ======= INLINE EDIT HELPERS =======
-window.toggleEdit = function(type, id) {
-  const el = document.getElementById('edit-'+type+'-'+id);
-  if (!el) return;
-  el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
-};
-function bankEditRow(r) {
-  if (r.auto) return '';
-  const cats = ['Salary/Pay','Car Installment','Insurance','Rent','Groceries','Food','Internet','Pets','Mother','Savings Transfer','Business','Loan Payment','Transfer','Other'];
-  return `<tr id="edit-bank-${r.id}" style="display:none;"><td colspan="8" style="padding:14px;background:var(--surface);border-bottom:1px solid var(--border);">
-    <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:10px;">
-      <div class="form-group"><label>Type</label><select id="ebank-type-${r.id}">
-        <option value="deposit"${r.type==='deposit'?' selected':''}>💚 Deposit</option>
-        <option value="withdrawal"${r.type==='withdrawal'?' selected':''}>🔴 Withdrawal</option>
-      </select></div>
-      <div class="form-group"><label>Amount (GYD)</label><input type="number" id="ebank-amount-${r.id}" value="${r.amount}"/></div>
-      <div class="form-group"><label>Description</label><input type="text" id="ebank-desc-${r.id}" value="${(r.desc||'').replace(/"/g,'&quot;')}"/></div>
-      <div class="form-group"><label>Category</label><select id="ebank-cat-${r.id}">${cats.map(c=>`<option${r.category===c?' selected':''}>${c}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Date</label><input type="date" id="ebank-date-${r.id}" value="${r.date}"/></div>
-      <div class="form-group"><label>Recurring</label><select id="ebank-recur-${r.id}">
-        <option value=""${!r.recurring?' selected':''}>One-time</option>
-        ${['weekly','fortnightly','monthly','3months','yearly'].map(v=>`<option value="${v}"${r.recurring===v?' selected':''}>${v}</option>`).join('')}
-      </select></div>
-    </div>
-    <div style="display:flex;gap:6px;">
-      <button class="btn btn-primary btn-sm" onclick="saveEditBank('${r.id}')">Save Changes</button>
-      <button class="btn btn-ghost btn-sm" onclick="toggleEdit('bank','${r.id}')">Cancel</button>
-    </div>
-  </td></tr>`;
-}
-window.saveEditBank = async function(id) {
-  const type = document.getElementById('ebank-type-'+id).value;
-  const amount = parseFloat(document.getElementById('ebank-amount-'+id).value);
-  const desc = document.getElementById('ebank-desc-'+id).value.trim();
-  const category = document.getElementById('ebank-cat-'+id).value;
-  const date = document.getElementById('ebank-date-'+id).value;
-  const recurring = document.getElementById('ebank-recur-'+id).value;
-  if (!amount || !date) { toast('Amount and date required', 'error'); return; }
-  await update('bankTransactions', id, {type, amount, desc, category, date, recurring});
-  bankData = bankData.map(x => x.id===id ? {...x, type, amount, desc, category, date, recurring} : x);
-  renderBank(); renderDashboard();
-  toast('Transaction updated ✓');
-};
-function incomeEditRow(r) {
-  const freqs = ['weekly','fortnightly','monthly','3months','yearly','once'];
-  return `<tr id="edit-inc-${r.id}" style="display:none;"><td colspan="7" style="padding:14px;background:var(--surface);border-bottom:1px solid var(--border);">
-    <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:10px;">
-      <div class="form-group"><label>Source</label><input type="text" id="einc-source-${r.id}" value="${(r.source||'').replace(/"/g,'&quot;')}"/></div>
-      <div class="form-group"><label>Amount (GYD)</label><input type="number" id="einc-amount-${r.id}" value="${r.amount}"/></div>
-      <div class="form-group"><label>Date</label><input type="date" id="einc-date-${r.id}" value="${r.date}"/></div>
-      <div class="form-group"><label>Frequency</label><select id="einc-freq-${r.id}">
-        ${freqs.map(v=>`<option value="${v}"${r.frequency===v?' selected':''}>${v}</option>`).join('')}
-      </select></div>
-      <div class="form-group"><label>Notes</label><input type="text" id="einc-notes-${r.id}" value="${(r.notes||'').replace(/"/g,'&quot;')}"/></div>
-    </div>
-    <div style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;padding:6px 8px;background:rgba(245,158,11,0.08);border-radius:6px;border-left:3px solid var(--yellow);">
-      ⚠️ Editing amount here updates the income record only. If this income was deposited to Bank or Cash, edit that transaction separately on the Bank page.
-    </div>
-    <div style="display:flex;gap:6px;">
-      <button class="btn btn-primary btn-sm" onclick="saveEditIncome('${r.id}')">Save Changes</button>
-      <button class="btn btn-ghost btn-sm" onclick="toggleEdit('inc','${r.id}')">Cancel</button>
-    </div>
-  </td></tr>`;
-}
-window.saveEditIncome = async function(id) {
-  const source = document.getElementById('einc-source-'+id).value.trim();
-  const amount = parseFloat(document.getElementById('einc-amount-'+id).value);
-  const date = document.getElementById('einc-date-'+id).value;
-  const frequency = document.getElementById('einc-freq-'+id).value;
-  const notes = document.getElementById('einc-notes-'+id).value.trim();
-  if (!source || !amount || !date) { toast('Fill source, amount and date', 'error'); return; }
-  await update('income', id, {source, amount, frequency, date, notes});
-  incomeData = incomeData.map(x => x.id===id ? {...x, source, amount, frequency, date, notes} : x);
-  renderIncome(); renderDashboard();
-  toast('Income updated ✓');
-};
-function expenseEditRow(r) {
-  const cats = ['Food','Groceries','Rent','Car Installment','Car Insurance','Internet','Pets','Mother','Medical','Utilities','Clothing','Entertainment','Travel','Other'];
-  const recurs = ['','weekly','fortnightly','monthly','3months','yearly'];
-  return `<tr id="edit-exp-${r.id}" style="display:none;"><td colspan="9" style="padding:14px;background:var(--surface);border-bottom:1px solid var(--border);">
-    <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:10px;">
-      <div class="form-group"><label>Category</label><select id="eexp-cat-${r.id}">${cats.map(c=>`<option${r.category===c?' selected':''}>${c}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Description</label><input type="text" id="eexp-desc-${r.id}" value="${(r.desc||'').replace(/"/g,'&quot;')}"/></div>
-      <div class="form-group"><label>Amount (GYD)</label><input type="number" id="eexp-amount-${r.id}" value="${r.amount}"/></div>
-      <div class="form-group"><label>Date</label><input type="date" id="eexp-date-${r.id}" value="${r.date}"/></div>
-      <div class="form-group"><label>Due Date</label><input type="date" id="eexp-due-${r.id}" value="${r.dueDate||''}"/></div>
-      <div class="form-group"><label>Recurring</label><select id="eexp-recurring-${r.id}">
-        ${recurs.map(v=>`<option value="${v}"${(r.recurring||'')=== v?' selected':''}>${v||'One-time'}</option>`).join('')}
-      </select></div>
-      <div class="form-group"><label>Notes</label><input type="text" id="eexp-notes-${r.id}" value="${(r.desc||'').replace(/"/g,'&quot;')}"/></div>
-    </div>
-    <div style="display:flex;gap:6px;">
-      <button class="btn btn-primary btn-sm" onclick="saveEditExpense('${r.id}')">Save Changes</button>
-      <button class="btn btn-ghost btn-sm" onclick="toggleEdit('exp','${r.id}')">Cancel</button>
-    </div>
-  </td></tr>`;
-}
-window.saveEditExpense = async function(id) {
-  const exp = expenseData.find(x => x.id === id); if (!exp) return;
-  const category = document.getElementById('eexp-cat-'+id).value;
-  const desc = document.getElementById('eexp-desc-'+id).value.trim();
-  const amount = parseFloat(document.getElementById('eexp-amount-'+id).value);
-  const date = document.getElementById('eexp-date-'+id).value;
-  const dueDate = document.getElementById('eexp-due-'+id).value;
-  const recurring = document.getElementById('eexp-recurring-'+id).value;
-  if (!amount || !date) { toast('Amount and date required', 'error'); return; }
-  if (exp.paid === 'paid' && amount !== exp.amount) {
-    if (exp.bankTxnId) await updateLinkedBankTxn(exp.bankTxnId, amount);
-    if (exp.cashTxnId) {
-      await update('cashTransactions', exp.cashTxnId, {amount});
-      cashData = cashData.map(x => x.id===exp.cashTxnId ? {...x, amount} : x);
-    }
-  }
-  const updated = {category, desc, amount, date, dueDate, recurring};
-  await update('expenses', id, updated);
-  expenseData = expenseData.map(x => x.id===id ? {...x, ...updated} : x);
-  renderExpenses(); renderBank(); renderCash(); renderDashboard();
-  toast('Expense updated ✓');
-};
+// Inline edit rows were replaced with the shared professional modal system.
 
 // ======= GOAL CONTRIBUTIONS =======
 function renderContribHistory(goalId) {
@@ -2885,7 +2856,7 @@ function renderContribHistory(goalId) {
         <span style="color:var(--muted);font-size:0.78rem;margin-left:8px;">${c.date}</span>
         ${c.notes ? '<span style="color:var(--muted);font-size:0.78rem;margin-left:6px;">— '+c.notes+'</span>' : ''}
       </div>
-      <button class="btn btn-danger btn-xs" onclick="deleteContribution('${c.id}','${goalId}',${c.amount})">✕</button>
+      <div style="display:flex;gap:5px;"><button class="btn btn-ghost btn-xs" onclick="editContribution('${c.id}','${goalId}')">✏️ Edit</button><button class="btn btn-danger btn-xs" onclick="deleteContribution('${c.id}','${goalId}',${c.amount})">✕</button></div>
     </div>`).join('');
 }
 window.toggleContributions = function(id) {
@@ -2918,7 +2889,7 @@ window.addContribution = async function(goalId) {
   toast('Contribution logged ✓');
 };
 window.deleteContribution = async function(contribId, goalId, amount) {
-  if (!confirm('Remove this contribution?')) return;
+  if (!(await confirmAction({title:'Remove contribution?', message:'The contribution will be removed and the goal’s saved balance will be adjusted.'}))) return;
   const goal = savingsData.find(x => x.id === goalId); if (!goal) return;
   await remove('goalContributions', contribId);
   goalContributionsData = goalContributionsData.filter(x => x.id !== contribId);
@@ -2957,6 +2928,7 @@ window.saveBudget = async function() {
   renderBudgets(); renderDashboard();
 };
 window.deleteBudget = async function(id) {
+  if (!(await confirmAction({title:'Delete budget limit?', message:'This monthly category limit will be permanently removed.'}))) return;
   await remove('budgets', id);
   budgetData = budgetData.filter(x => x.id !== id);
   renderBudgets(); renderDashboard();
@@ -3194,11 +3166,16 @@ window.openSaleModal = function() {
   saleItemRowId = 0;
   addSaleItemRow();
   updateModalTotals();
+  document.getElementById('sale-modal-title').textContent = 'New Sale / Transaction';
   document.getElementById('sale-modal-overlay').classList.add('open');
+  document.body.classList.add('modal-open');
 };
 
 window.closeSaleModal = function() {
   document.getElementById('sale-modal-overlay').classList.remove('open');
+  editingSaleId = null;
+  document.getElementById('sale-modal-title').textContent = 'New Sale / Transaction';
+  if (!document.getElementById('form-modal-overlay').classList.contains('open') && !document.getElementById('confirm-modal-overlay').classList.contains('open')) document.body.classList.remove('modal-open');
 };
 
 // Auto-distribute target sell price proportionally across items by cost price
@@ -3331,7 +3308,7 @@ window.saveSale = async function() {
 };
 
 window.deleteSale = async function(id) {
-  if (!confirm('Delete this sale?')) return;
+  if (!(await confirmAction({title:'Delete sale?', message:'This sale and its item-level profit details will be permanently removed.'}))) return;
   await remove('sales', id);
   salesData = salesData.filter(x => x.id !== id);
   renderSales();
@@ -3377,98 +3354,403 @@ function renderSales() {
 }
 
 
-// ======= UNIVERSAL EDITING =======
-function askText(label, current) {
-  const v = prompt(label, current ?? '');
-  return v === null ? null : v.trim();
+// ======= PROFESSIONAL MODAL ENGINE =======
+let activeModalSubmit = null;
+let activeModalFields = [];
+let confirmResolver = null;
+
+function modalOptionValue(option) { return typeof option === 'object' ? option.value : option; }
+function modalOptionLabel(option) { return typeof option === 'object' ? option.label : option; }
+
+function openFormModal(config) {
+  const overlay = document.getElementById('form-modal-overlay');
+  const fieldsEl = document.getElementById('form-modal-fields');
+  const errorEl = document.getElementById('form-modal-error');
+  const noticeEl = document.getElementById('form-modal-notice');
+  document.getElementById('form-modal-icon').textContent = config.icon || '✏️';
+  document.getElementById('form-modal-title').textContent = config.title || 'Edit Record';
+  document.getElementById('form-modal-subtitle').textContent = config.subtitle || 'Update the details below.';
+  document.getElementById('form-modal-submit').textContent = config.submitLabel || 'Save Changes';
+  errorEl.textContent = ''; errorEl.classList.remove('show');
+  noticeEl.style.display = config.notice ? 'block' : 'none';
+  noticeEl.textContent = config.notice || '';
+  fieldsEl.innerHTML = '';
+  activeModalFields = config.fields || [];
+  activeModalSubmit = config.onSubmit;
+
+  activeModalFields.forEach(field => {
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-field' + (field.wide ? ' wide' : '');
+    wrap.dataset.fieldWrap = field.name;
+    const label = document.createElement('label');
+    label.htmlFor = 'modal-field-' + field.name;
+    const labelText = document.createElement('span'); labelText.textContent = field.label;
+    label.appendChild(labelText);
+    if (!field.required) {
+      const optional = document.createElement('span'); optional.className = 'field-optional'; optional.textContent = 'Optional'; label.appendChild(optional);
+    }
+    wrap.appendChild(label);
+
+    let input;
+    if (field.type === 'select') {
+      input = document.createElement('select');
+      (field.options || []).forEach(option => {
+        const el = document.createElement('option');
+        el.value = modalOptionValue(option); el.textContent = modalOptionLabel(option);
+        input.appendChild(el);
+      });
+    } else if (field.type === 'textarea') {
+      input = document.createElement('textarea');
+    } else {
+      input = document.createElement('input');
+      input.type = field.type || 'text';
+      if (field.min !== undefined) input.min = field.min;
+      if (field.max !== undefined) input.max = field.max;
+      if (field.step !== undefined) input.step = field.step;
+    }
+    input.id = 'modal-field-' + field.name;
+    input.name = field.name;
+    input.value = field.value ?? '';
+    if (field.placeholder) input.placeholder = field.placeholder;
+    if (field.required) input.required = true;
+    if (field.disabled) input.disabled = true;
+    input.addEventListener('change', refreshModalConditions);
+    input.addEventListener('input', () => { document.getElementById('form-modal-error').classList.remove('show'); refreshModalConditions(); });
+    wrap.appendChild(input);
+    if (field.helper) {
+      const helper = document.createElement('div'); helper.className = 'modal-helper'; helper.textContent = field.helper; wrap.appendChild(helper);
+    }
+    fieldsEl.appendChild(wrap);
+  });
+
+  refreshModalConditions();
+  overlay.classList.add('open'); document.body.classList.add('modal-open');
+  setTimeout(() => fieldsEl.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])')?.focus(), 60);
 }
-function askAmount(label, current) {
-  const v = prompt(label, Number(current || 0));
-  if (v === null) return null;
-  const n = Number(v);
-  if (!Number.isFinite(n) || n < 0) { toast('Enter a valid amount', 'error'); return null; }
-  return n;
+
+function getModalRawValues() {
+  const values = {};
+  activeModalFields.forEach(field => {
+    const input = document.getElementById('modal-field-' + field.name);
+    if (!input) return;
+    values[field.name] = field.type === 'number' ? (input.value === '' ? '' : Number(input.value)) : input.value.trim();
+  });
+  return values;
 }
 
-window.editExpenseQuick = function(id) {
-  editRows.exp = editRows.exp === id ? null : id;
-  expenseStatusFilter = 'all'; expFilter = 'all';
-  const search = document.getElementById('search-expense'); if (search) search.value = '';
-  renderExpenses();
-  setTimeout(() => document.getElementById('edit-exp-'+id)?.scrollIntoView({behavior:'smooth',block:'center'}), 50);
+function refreshModalConditions() {
+  const values = getModalRawValues();
+  activeModalFields.forEach(field => {
+    const wrap = document.querySelector(`[data-field-wrap="${field.name}"]`);
+    if (!wrap) return;
+    let visible = true;
+    if (field.showWhen) visible = values[field.showWhen.field] === field.showWhen.equals;
+    if (typeof field.visible === 'function') visible = !!field.visible(values);
+    wrap.style.display = visible ? '' : 'none';
+    const input = document.getElementById('modal-field-' + field.name);
+    if (input) input.disabled = !visible || !!field.disabled;
+  });
+}
+
+function showModalError(message) {
+  const errorEl = document.getElementById('form-modal-error');
+  errorEl.textContent = message; errorEl.classList.add('show');
+  errorEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+window.submitFormModal = async function(event) {
+  event.preventDefault();
+  const submit = document.getElementById('form-modal-submit');
+  const values = getModalRawValues();
+  for (const field of activeModalFields) {
+    const input = document.getElementById('modal-field-' + field.name);
+    if (!input || input.disabled) continue;
+    if (field.required && (values[field.name] === '' || values[field.name] === null)) {
+      showModalError(`${field.label} is required.`); input.focus(); return;
+    }
+    if (field.type === 'number' && values[field.name] !== '') {
+      if (!Number.isFinite(values[field.name])) { showModalError(`Enter a valid ${field.label.toLowerCase()}.`); input.focus(); return; }
+      if (field.min !== undefined && values[field.name] < Number(field.min)) { showModalError(`${field.label} must be at least ${field.min}.`); input.focus(); return; }
+    }
+  }
+  submit.disabled = true; const original = submit.textContent; submit.textContent = 'Saving…';
+  try {
+    const result = await activeModalSubmit?.(values);
+    if (result !== false) closeFormModal();
+  } catch (error) {
+    console.error(error); showModalError(error?.message || 'Unable to save these changes.');
+  } finally {
+    submit.disabled = false; submit.textContent = original;
+  }
 };
 
-window.editMomTxn = async function(id) {
-  const r = momTxnData.find(x=>x.id===id); if(!r) return;
-  const desc=askText('Description:',r.desc); if(desc===null) return;
-  const amount=askAmount('Amount (GYD):',r.amount); if(amount===null) return;
-  const date=askText('Date (YYYY-MM-DD):',r.date); if(date===null) return;
-  const type=askText('Type: in or out',r.type); if(type===null) return;
-  if(!['in','out'].includes(type)){toast('Type must be in or out','error');return;}
-  let payvia=r.payvia||'bank';
-  if(type==='out'){ const p=askText('Paid from: bank or cash',payvia); if(p===null)return; if(!['bank','cash'].includes(p)){toast('Use bank or cash','error');return;} payvia=p; }
-  else payvia='bank';
-  const changes={desc,amount,date,type,payvia};
-  await update('momTransactions',id,changes);
-  momTxnData=momTxnData.map(x=>x.id===id?{...x,...changes}:x);
-  momMoney=momTxnData.filter(x=>x.type==='in').reduce((s,x)=>s+x.amount,0)-momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((s,x)=>s+x.amount,0);
-  renderMom(); renderDashboard(); toast('Mom transaction updated ✓');
+window.closeFormModal = function() {
+  document.getElementById('form-modal-overlay').classList.remove('open');
+  activeModalSubmit = null; activeModalFields = [];
+  if (!document.getElementById('confirm-modal-overlay').classList.contains('open') && !document.getElementById('sale-modal-overlay').classList.contains('open')) document.body.classList.remove('modal-open');
 };
 
-window.editLoan = async function(id) {
-  const r=loanData.find(x=>x.id===id); if(!r)return;
-  const person=askText('Person or entity:',r.person); if(person===null)return;
-  const amount=askAmount('Original loan amount (GYD):',r.amount); if(amount===null)return;
-  const paidBack=askAmount('Amount paid back so far (GYD):',r.paidBack||0); if(paidBack===null)return;
-  const date=askText('Loan date (YYYY-MM-DD):',r.date); if(date===null)return;
-  const dueDate=askText('Next due date (YYYY-MM-DD, or blank):',r.dueDate||''); if(dueDate===null)return;
-  const installment=askAmount('Automatic monthly installment (GYD):',r.installment||0); if(installment===null)return;
-  const auto=askText('Automatic bank deduction? yes or no',r.autoPay?'yes':'no'); if(auto===null)return;
-  const notes=askText('Notes:',r.notes||''); if(notes===null)return;
-  const changes={person,amount,paidBack,date,dueDate,installment,autoPay:r.direction==='owe'&&auto.toLowerCase()==='yes',notes};
-  await update('loans',id,changes); loanData=loanData.map(x=>x.id===id?{...x,...changes}:x);
-  renderLoans(); renderDashboard(); toast('Loan updated ✓');
+window.handleModalBackdrop = function(event, type) {
+  if (event.target !== event.currentTarget) return;
+  if (type === 'form') closeFormModal(); else resolveConfirm(false);
 };
 
-window.editBusiness = async function(id) {
-  const r=bizData.find(x=>x.id===id); if(!r)return;
-  const type=askText('Type: revenue or cost',r.type); if(type===null)return;
-  if(!['revenue','cost'].includes(type)){toast('Use revenue or cost','error');return;}
-  const desc=askText('Description:',r.desc||''); if(desc===null)return;
-  const category=askText('Category:',r.category||'Other'); if(category===null)return;
-  const amount=askAmount('Amount (GYD):',r.amount); if(amount===null)return;
-  const date=askText('Date (YYYY-MM-DD):',r.date); if(date===null)return;
-  const changes={type,desc,category,amount,date}; await update('business',id,changes);
-  bizData=bizData.map(x=>x.id===id?{...x,...changes}:x); renderBusiness(); toast('Business entry updated ✓');
+function confirmAction({title='Delete record?', message='This action cannot be undone.', confirmLabel='Delete Permanently'}) {
+  document.getElementById('confirm-modal-title').textContent = title;
+  document.getElementById('confirm-modal-message').textContent = message;
+  document.getElementById('confirm-modal-submit').textContent = confirmLabel;
+  document.getElementById('confirm-modal-overlay').classList.add('open');
+  document.body.classList.add('modal-open');
+  return new Promise(resolve => { confirmResolver = resolve; });
+}
+
+window.resolveConfirm = function(result) {
+  document.getElementById('confirm-modal-overlay').classList.remove('open');
+  const resolver = confirmResolver; confirmResolver = null;
+  if (!document.getElementById('form-modal-overlay').classList.contains('open') && !document.getElementById('sale-modal-overlay').classList.contains('open')) document.body.classList.remove('modal-open');
+  resolver?.(result);
 };
 
-window.editCash = async function(id) {
-  const r=cashData.find(x=>x.id===id); if(!r)return;
-  const type=askText('Type: in or out',r.type); if(type===null)return;
-  if(!['in','out'].includes(type)){toast('Use in or out','error');return;}
-  const desc=askText('Description:',r.desc||''); if(desc===null)return;
-  const amount=askAmount('Amount (GYD):',r.amount); if(amount===null)return;
-  const date=askText('Date (YYYY-MM-DD):',r.date); if(date===null)return;
-  const changes={type,desc,amount,date}; await update('cashTransactions',id,changes);
-  cashData=cashData.map(x=>x.id===id?{...x,...changes}:x); renderCash(); renderDashboard(); toast('Cash entry updated ✓');
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  if (document.getElementById('confirm-modal-overlay').classList.contains('open')) resolveConfirm(false);
+  else if (document.getElementById('form-modal-overlay').classList.contains('open')) closeFormModal();
+  else if (document.getElementById('sale-modal-overlay').classList.contains('open')) closeSaleModal();
+});
+
+const bankCategories = ['Salary/Pay','Car Installment','Insurance','Rent','Groceries','Food','Internet','Pets','Mother','Savings Transfer','Business','Loan Payment','Transfer','Other'];
+const expenseCategories = ['Food','Groceries','Rent','Car Installment','Car Insurance','Internet','Pets','Mother','Medical','Utilities','Clothing','Entertainment','Travel','Other'];
+const businessCategories = ['Sales','Services','Inventory','Supplies','Marketing','Transport','Utilities','Labour','Other'];
+const recurringOptions = [
+  {value:'',label:'One-time'}, {value:'weekly',label:'Weekly'}, {value:'fortnightly',label:'Fortnightly'},
+  {value:'monthly',label:'Monthly'}, {value:'3months',label:'Every 3 Months'}, {value:'yearly',label:'Yearly'}
+];
+
+window.editBankModal = function(id) {
+  const r = bankData.find(x=>x.id===id); if (!r || r.auto) return;
+  openFormModal({ icon:'🏦', title:'Edit Bank Transaction', subtitle:'Update this Bank ledger entry.', fields:[
+    {name:'type',label:'Transaction Type',type:'select',required:true,value:r.type,options:[{value:'deposit',label:'💚 Deposit (Money In)'},{value:'withdrawal',label:'🔴 Withdrawal (Money Out)'}]},
+    {name:'amount',label:'Amount (GYD)',type:'number',required:true,min:0.01,step:'0.01',value:r.amount},
+    {name:'desc',label:'Description',type:'text',value:r.desc||'',placeholder:'What was this transaction for?'},
+    {name:'category',label:'Category',type:'select',required:true,value:r.category||'Other',options:bankCategories},
+    {name:'date',label:'Date',type:'date',required:true,value:r.date},
+    {name:'recurring',label:'Recurring Schedule',type:'select',value:r.recurring||'',options:recurringOptions}
+  ], onSubmit: async v => {
+    const changes={type:v.type,amount:Number(v.amount),desc:v.desc,category:v.category,date:v.date,recurring:v.recurring};
+    await update('bankTransactions',id,changes); bankData=bankData.map(x=>x.id===id?{...x,...changes}:x);
+    renderBank(); renderDashboard(); toast('Transaction updated ✓');
+  }});
 };
 
-window.editBudget = async function(id) {
-  const r=budgetData.find(x=>x.id===id); if(!r)return;
-  const category=askText('Budget category:',r.category); if(category===null)return;
-  const limit=askAmount('Monthly budget limit (GYD):',r.limit); if(limit===null)return;
-  const changes={category,limit}; await update('budgets',id,changes);
-  budgetData=budgetData.map(x=>x.id===id?{...x,...changes}:x); renderBudgets(); renderDashboard(); toast('Budget updated ✓');
+window.editIncomeModal = function(id) {
+  const r = incomeData.find(x=>x.id===id); if(!r) return;
+  openFormModal({ icon:'💰', title:'Edit Income', subtitle:'Update the income record and how it was received.',
+    notice:'Changes here update the income record only. Related Bank or Cash ledger entries must be edited separately.',
+    fields:[
+      {name:'source',label:'Income Source',type:'text',required:true,value:r.source||'',wide:true},
+      {name:'amount',label:'Amount (GYD)',type:'number',required:true,min:0.01,step:'0.01',value:r.amount},
+      {name:'payvia',label:'Paid Via',type:'select',required:true,value:r.payvia||'bank',options:[{value:'bank',label:'🏦 Bank Transfer'},{value:'cash',label:'💵 Cash in Hand'}]},
+      {name:'depositToBank',label:'Amount Deposited to Bank (GYD)',type:'number',min:0,step:'0.01',value:r.depositToBank||0,showWhen:{field:'payvia',equals:'cash'}},
+      {name:'frequency',label:'Frequency',type:'select',required:true,value:r.frequency||'monthly',options:[{value:'weekly',label:'Weekly'},{value:'fortnightly',label:'Fortnightly'},{value:'monthly',label:'Monthly'},{value:'3months',label:'Every 3 Months'},{value:'yearly',label:'Yearly'},{value:'once',label:'One-time'}]},
+      {name:'date',label:'Date Received',type:'date',required:true,value:r.date},
+      {name:'notes',label:'Notes',type:'textarea',value:r.notes||'',wide:true}
+    ], onSubmit: async v => {
+      const depositToBank = v.payvia==='cash' ? Number(v.depositToBank||0) : 0;
+      if (depositToBank > Number(v.amount)) { showModalError('The amount deposited to Bank cannot exceed the income amount.'); return false; }
+      const changes={source:v.source,amount:Number(v.amount),payvia:v.payvia,depositToBank,frequency:v.frequency,date:v.date,notes:v.notes};
+      await update('income',id,changes); incomeData=incomeData.map(x=>x.id===id?{...x,...changes}:x);
+      renderIncome(); renderDashboard(); toast('Income updated ✓');
+    }});
+};
+
+window.editExpenseModal = function(id) {
+  const r = expenseData.find(x=>x.id===id); if(!r) return;
+  openFormModal({ icon:'🧾', title:'Edit Expense', subtitle:'Update the amount, due date, status, and payment source.', fields:[
+    {name:'category',label:'Category',type:'select',required:true,value:r.category||'Other',options:expenseCategories},
+    {name:'amount',label:'Amount (GYD)',type:'number',required:true,min:0.01,step:'0.01',value:r.amount},
+    {name:'desc',label:'Description',type:'text',value:r.desc||'',wide:true},
+    {name:'date',label:'Expense Date',type:'date',required:true,value:r.date},
+    {name:'dueDate',label:'Due Date',type:'date',value:r.dueDate||''},
+    {name:'recurring',label:'Recurring Schedule',type:'select',value:r.recurring||'',options:recurringOptions},
+    {name:'paid',label:'Payment Status',type:'select',required:true,value:r.paid||'unpaid',options:[{value:'unpaid',label:'⏳ Unpaid'},{value:'paid',label:'✅ Paid'}]},
+    {name:'paidVia',label:'Paid From',type:'select',required:true,value:r.paidVia||'bank',options:[{value:'bank',label:'🏦 Bank'},{value:'cash',label:'💵 Cash in Hand'}],showWhen:{field:'paid',equals:'paid'}},
+    {name:'itemsText',label:'Itemized Breakdown',type:'textarea',value:(r.items||[]).map(item=>`${item.name||'Item'} | ${Number(item.amount||0)}`).join('\n'),wide:true,helper:'Use one item per line in this format: Item name | amount'}
+  ], onSubmit: async v => {
+    const items=[];
+    if(v.itemsText){
+      for(const line of v.itemsText.split(/\n+/).map(x=>x.trim()).filter(Boolean)){
+        const parts=line.split('|');
+        if(parts.length<2){showModalError('Each itemized line must use: Item name | amount');return false;}
+        const amount=Number(parts.pop().trim()); const name=parts.join('|').trim();
+        if(!name||!Number.isFinite(amount)||amount<0){showModalError('Check the itemized breakdown. Every line needs a name and valid amount.');return false;}
+        items.push({name,amount});
+      }
+    }
+    const oldPaid=r.paid||'unpaid', newPaid=v.paid;
+    const oldVia=r.paidVia||'bank', newVia=v.paidVia||oldVia;
+    let bankTxnId=r.bankTxnId||null, cashTxnId=r.cashTxnId||null;
+    if (oldPaid==='paid' && (newPaid==='unpaid' || oldVia!==newVia)) {
+      if (bankTxnId) { await deleteLinkedBankTxn(bankTxnId); bankTxnId=null; }
+      if (cashTxnId) { await remove('cashTransactions',cashTxnId); cashData=cashData.filter(x=>x.id!==cashTxnId); cashTxnId=null; }
+    }
+    if (newPaid==='paid') {
+      if (oldPaid!=='paid' || oldVia!==newVia) {
+        if (newVia==='cash') {
+          const ce={type:'out',desc:'Expense: '+(v.desc||v.category),amount:Number(v.amount),date:v.date,notes:v.category};
+          cashTxnId=await save('cashTransactions',ce); if(cashTxnId) cashData.push({id:cashTxnId,...ce});
+        } else {
+          bankTxnId=await createLinkedBankTxn({amount:Number(v.amount),desc:'Expense: '+(v.desc||v.category),category:v.category,date:v.date,linkType:'expense',linkId:id});
+        }
+      } else {
+        if (bankTxnId) { const linked={amount:Number(v.amount),desc:'Expense: '+(v.desc||v.category),category:v.category,date:v.date}; await update('bankTransactions',bankTxnId,linked); bankData=bankData.map(x=>x.id===bankTxnId?{...x,...linked}:x); }
+        if (cashTxnId) { await update('cashTransactions',cashTxnId,{amount:Number(v.amount),desc:'Expense: '+(v.desc||v.category),date:v.date,notes:v.category}); cashData=cashData.map(x=>x.id===cashTxnId?{...x,amount:Number(v.amount),desc:'Expense: '+(v.desc||v.category),date:v.date,notes:v.category}:x); }
+      }
+    }
+    const changes={category:v.category,desc:v.desc,amount:Number(v.amount),date:v.date,dueDate:v.dueDate,recurring:v.recurring,paid:newPaid,paidVia:newPaid==='paid'?newVia:'',items,bankTxnId,cashTxnId};
+    await update('expenses',id,changes); expenseData=expenseData.map(x=>x.id===id?{...x,...changes}:x);
+    renderExpenses(); renderBank(); renderCash(); renderDashboard(); toast('Expense updated ✓');
+  }});
+};
+
+window.editExpenseQuick = function(id) { editExpenseModal(id); };
+
+function editSavingsModal(id) {
+  const r=savingsData.find(x=>x.id===id); if(!r) return;
+  openFormModal({ icon:'🎯', title:'Edit Savings Goal', subtitle:'Update the target, saved amount, and contribution plan.',
+    notice:'Changing the amount saved also adjusts the linked Bank withdrawal for this goal.', fields:[
+      {name:'name',label:'Goal Name',type:'text',required:true,value:r.name||'',wide:true},
+      {name:'target',label:'Target Amount (GYD)',type:'number',required:true,min:0.01,step:'0.01',value:r.target},
+      {name:'saved',label:'Amount Saved (GYD)',type:'number',required:true,min:0,step:'0.01',value:r.saved||0},
+      {name:'monthly',label:'Monthly Contribution (GYD)',type:'number',min:0,step:'0.01',value:r.monthly||0},
+      {name:'targetDate',label:'Target Date',type:'date',value:r.targetDate||''},
+      {name:'notes',label:'Notes',type:'textarea',value:r.notes||'',wide:true}
+    ], onSubmit: async v => {
+      if (Number(v.saved) > Number(v.target)) { showModalError('Amount saved cannot exceed the target amount.'); return false; }
+      let bankTxnId=r.bankTxnId||null;
+      if (Number(v.saved)<=0) { if(bankTxnId){await deleteLinkedBankTxn(bankTxnId);bankTxnId=null;} }
+      else if(bankTxnId) { const linked={amount:Number(v.saved),desc:'Savings: '+v.name,date:v.targetDate||today()}; await update('bankTransactions',bankTxnId,linked); bankData=bankData.map(x=>x.id===bankTxnId?{...x,...linked}:x); }
+      else bankTxnId=await createLinkedBankTxn({amount:Number(v.saved),desc:'Savings: '+v.name,category:'Savings Transfer',date:v.targetDate||today(),linkType:'savings',linkId:id});
+      const changes={name:v.name,target:Number(v.target),saved:Number(v.saved),monthly:Number(v.monthly||0),targetDate:v.targetDate,notes:v.notes,bankTxnId};
+      await update('savings',id,changes); savingsData=savingsData.map(x=>x.id===id?{...x,...changes}:x);
+      renderSavings(); renderBank(); renderDashboard(); toast('Goal updated ✓');
+    }});
+}
+
+window.editMomTxn = function(id) {
+  const r=momTxnData.find(x=>x.id===id); if(!r) return;
+  openFormModal({ icon:'👩', title:'Edit Mom’s Transaction', subtitle:'Update this Mom’s Money record.',
+    notice:'This updates Mom’s Money only. Existing linked Bank or Cash entries are not changed automatically.', fields:[
+      {name:'type',label:'Transaction Type',type:'select',required:true,value:r.type,options:[{value:'in',label:'💰 Mom Deposited'},{value:'out',label:'🛒 Bought for Mom'}]},
+      {name:'payvia',label:'Paid From',type:'select',required:true,value:r.payvia||'bank',options:[{value:'bank',label:'🏦 Bank'},{value:'cash',label:'💵 Cash'}],showWhen:{field:'type',equals:'out'}},
+      {name:'amount',label:'Amount (GYD)',type:'number',required:true,min:0.01,step:'0.01',value:r.amount},
+      {name:'date',label:'Date',type:'date',required:true,value:r.date},
+      {name:'desc',label:'Description',type:'textarea',required:true,value:r.desc||'',wide:true}
+    ], onSubmit: async v => {
+      const changes={type:v.type,payvia:v.type==='out'?v.payvia:'bank',amount:Number(v.amount),date:v.date,desc:v.desc};
+      await update('momTransactions',id,changes); momTxnData=momTxnData.map(x=>x.id===id?{...x,...changes}:x);
+      momMoney=momTxnData.filter(x=>x.type==='in').reduce((a,x)=>a+x.amount,0)-momTxnData.filter(x=>x.type==='out'&&x.payvia==='bank').reduce((a,x)=>a+x.amount,0);
+      renderMom(); renderDashboard(); toast('Mom transaction updated ✓');
+    }});
+};
+
+window.editLoan = function(id) {
+  const r=loanData.find(x=>x.id===id); if(!r) return;
+  openFormModal({ icon:'🤝', title:'Edit Loan', subtitle:'Update the loan terms, repayment progress, and automation.', fields:[
+    {name:'direction',label:'Direction',type:'select',required:true,value:r.direction,options:[{value:'lent',label:'💚 I Lent (They owe me)'},{value:'owe',label:'🔴 I Owe (I borrowed)'}]},
+    {name:'person',label:'Person or Entity',type:'text',required:true,value:r.person||''},
+    {name:'amount',label:'Original Amount (GYD)',type:'number',required:true,min:0.01,step:'0.01',value:r.amount},
+    {name:'paidBack',label:'Amount Paid Back (GYD)',type:'number',required:true,min:0,step:'0.01',value:r.paidBack||0},
+    {name:'date',label:'Loan Date',type:'date',required:true,value:r.date},
+    {name:'dueDate',label:'Next Due Date',type:'date',value:r.dueDate||''},
+    {name:'installment',label:'Monthly Installment (GYD)',type:'number',min:0,step:'0.01',value:r.installment||0,visible:v=>v.direction==='owe'},
+    {name:'autoPay',label:'Automatic Bank Payment',type:'select',required:true,value:r.autoPay?'yes':'no',options:[{value:'yes',label:'Yes — deduct every due date'},{value:'no',label:'No — update manually'}],visible:v=>v.direction==='owe'},
+    {name:'notes',label:'Notes',type:'textarea',value:r.notes||'',wide:true}
+  ], onSubmit: async v => {
+    if(Number(v.paidBack)>Number(v.amount)){showModalError('Amount paid back cannot exceed the original loan amount.');return false;}
+    const fullyPaid=Number(v.paidBack)>=Number(v.amount);
+    const autoPay=!fullyPaid&&v.direction==='owe'&&v.autoPay==='yes';
+    if(autoPay&&(!v.dueDate||!Number(v.installment))){showModalError('Automatic payment requires a due date and monthly installment.');return false;}
+    const changes={direction:v.direction,person:v.person,amount:Number(v.amount),paidBack:Number(v.paidBack),date:v.date,dueDate:fullyPaid?'':v.dueDate,installment:v.direction==='owe'?Number(v.installment||0):0,autoPay,notes:v.notes};
+    await update('loans',id,changes); loanData=loanData.map(x=>x.id===id?{...x,...changes}:x);
+    renderLoans(); renderDashboard(); toast('Loan updated ✓');
+  }});
+};
+
+window.editBusiness = function(id) {
+  const r=bizData.find(x=>x.id===id); if(!r) return;
+  openFormModal({ icon:'📈', title:'Edit Business Entry', subtitle:'Update this revenue or cost record.', fields:[
+    {name:'type',label:'Entry Type',type:'select',required:true,value:r.type,options:[{value:'revenue',label:'💚 Revenue / Sale'},{value:'cost',label:'🔴 Cost / Expense'}]},
+    {name:'amount',label:'Amount (GYD)',type:'number',required:true,min:0.01,step:'0.01',value:r.amount},
+    {name:'desc',label:'Description',type:'text',value:r.desc||'',wide:true},
+    {name:'category',label:'Category',type:'select',required:true,value:r.category||'Other',options:businessCategories},
+    {name:'date',label:'Date',type:'date',required:true,value:r.date}
+  ], onSubmit: async v=>{
+    const changes={type:v.type,desc:v.desc,category:v.category,amount:Number(v.amount),date:v.date};
+    await update('business',id,changes); bizData=bizData.map(x=>x.id===id?{...x,...changes}:x); renderBusiness(); toast('Business entry updated ✓');
+  }});
+};
+
+window.editCash = function(id) {
+  const r=cashData.find(x=>x.id===id); if(!r) return;
+  openFormModal({ icon:'💵', title:'Edit Cash Entry', subtitle:'Update this Cash in Hand ledger entry.', fields:[
+    {name:'type',label:'Cash Movement',type:'select',required:true,value:r.type,options:[{value:'in',label:'💚 Cash In'},{value:'out',label:'🔴 Cash Out'}]},
+    {name:'amount',label:'Amount (GYD)',type:'number',required:true,min:0.01,step:'0.01',value:r.amount},
+    {name:'desc',label:'Description',type:'text',value:r.desc||'',wide:true},
+    {name:'date',label:'Date',type:'date',required:true,value:r.date}
+  ], onSubmit: async v=>{
+    const changes={type:v.type,desc:v.desc,amount:Number(v.amount),date:v.date};
+    await update('cashTransactions',id,changes); cashData=cashData.map(x=>x.id===id?{...x,...changes}:x);
+    renderCash(); renderDashboard(); toast('Cash entry updated ✓');
+  }});
+};
+
+window.editContribution = function(contribId, goalId) {
+  const c=goalContributionsData.find(x=>x.id===contribId); const goal=savingsData.find(x=>x.id===goalId);
+  if(!c||!goal) return;
+  openFormModal({ icon:'💵', title:'Edit Savings Contribution', subtitle:`Update the contribution recorded for ${goal.name}.`, fields:[
+    {name:'amount',label:'Contribution Amount (GYD)',type:'number',required:true,min:0.01,step:'0.01',value:c.amount},
+    {name:'date',label:'Contribution Date',type:'date',required:true,value:c.date},
+    {name:'notes',label:'Notes',type:'textarea',value:c.notes||'',wide:true}
+  ], onSubmit: async v=>{
+    const newAmount=Number(v.amount); const newSaved=Math.max(0,Number(goal.saved||0)-Number(c.amount||0)+newAmount);
+    if(newSaved>Number(goal.target||0)){showModalError('This contribution would make the saved amount exceed the goal target.');return false;}
+    const contributionChanges={amount:newAmount,date:v.date,notes:v.notes};
+    await update('goalContributions',contribId,contributionChanges);
+    goalContributionsData=goalContributionsData.map(x=>x.id===contribId?{...x,...contributionChanges}:x);
+    await update('savings',goalId,{saved:newSaved});
+    savingsData=savingsData.map(x=>x.id===goalId?{...x,saved:newSaved}:x);
+    const updatedGoal=savingsData.find(x=>x.id===goalId);
+    if(updatedGoal.bankTxnId){
+      if(newSaved<=0){await deleteLinkedBankTxn(updatedGoal.bankTxnId);await update('savings',goalId,{bankTxnId:null});savingsData=savingsData.map(x=>x.id===goalId?{...x,bankTxnId:null}:x);}
+      else {await updateLinkedBankTxn(updatedGoal.bankTxnId,newSaved);}
+    } else if(newSaved>0){
+      const bankTxnId=await createLinkedBankTxn({amount:newSaved,desc:'Savings: '+updatedGoal.name,category:'Savings Transfer',date:v.date,linkType:'savings',linkId:goalId});
+      if(bankTxnId){await update('savings',goalId,{bankTxnId});savingsData=savingsData.map(x=>x.id===goalId?{...x,bankTxnId}:x);}
+    }
+    renderSavings();renderBank();renderDashboard();toast('Contribution updated ✓');
+  }});
+};
+
+window.editBudget = function(id) {
+  const r=budgetData.find(x=>x.id===id); if(!r) return;
+  openFormModal({ icon:'📊', title:'Edit Monthly Budget', subtitle:'Update this category’s monthly spending limit.', fields:[
+    {name:'category',label:'Budget Category',type:'select',required:true,value:r.category,options:expenseCategories},
+    {name:'limit',label:'Monthly Limit (GYD)',type:'number',required:true,min:0.01,step:'0.01',value:r.limit,wide:true}
+  ], onSubmit: async v=>{
+    const duplicate=budgetData.find(x=>x.id!==id&&x.category===v.category); if(duplicate){showModalError('A budget already exists for this category.');return false;}
+    const changes={category:v.category,limit:Number(v.limit)}; await update('budgets',id,changes);
+    budgetData=budgetData.map(x=>x.id===id?{...x,...changes}:x); renderBudgets(); renderDashboard(); toast('Budget updated ✓');
+  }});
 };
 
 window.editSale = function(id) {
   const r=salesData.find(x=>x.id===id); if(!r)return;
   editingSaleId=id;
-  const overlay=document.getElementById('sale-modal-overlay'); overlay.classList.add('open');
+  const overlay=document.getElementById('sale-modal-overlay'); overlay.classList.add('open'); document.body.classList.add('modal-open');
   document.getElementById('sale-date').value=r.date||today();
   document.getElementById('sale-desc').value=r.desc||'';
   document.getElementById('sale-target-total').value='';
-  const tbody=document.getElementById('sale-items-body'); tbody.innerHTML='';
+  const tbody=document.getElementById('sale-items-body'); tbody.innerHTML=''; saleItemRowId=0;
   (r.items||[]).forEach(item=>{
     addSaleItemRow(); const rid=saleItemRowId;
     document.getElementById('si-name-'+rid).value=item.name||'';
@@ -3478,7 +3760,7 @@ window.editSale = function(id) {
     updateSaleRow(rid);
   });
   if(!(r.items||[]).length) addSaleItemRow();
-  overlay.querySelector('div[style*="font-size:1.2rem"]')?.replaceChildren(document.createTextNode('Edit Sale / Transaction'));
+  document.getElementById('sale-modal-title').textContent='Edit Sale / Transaction';
   updateModalTotals();
 };
 
